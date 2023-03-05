@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'; dotenv.config();
 const { Client, GatewayIntentBits } = require('discord.js');
-import { chatGptResponse, handleGptResponse } from '../services/gptService';
+import { chatGptResponse, handleGptResponse, readAIAsString } from '../services/gptService';
 import { isTruthy } from "../util/isTruthy";
 import { logger } from '../util/logger';
 import { Events, Message } from 'discord.js';
@@ -49,7 +49,8 @@ export const startOptonnani = () => {
         //     });
 
         // ChatGPT-3.5
-        const resp = await chatGptResponse(promptPrimes.CHUCK_NORRIS, messageContent, await sha2Async(message.author.id), "CHUCK_NORRIS");
+        const primer = await readAIAsString("Chuck_Norris");
+        const resp = await chatGptResponse(primer, messageContent, await sha2Async(message.author.id), "Chuck_Norris"); // TODO: last 2 params optional?
 
         message.reply(resp);
         // message.channel.send(gptResponse); // Doesn't work in TS..?
@@ -59,17 +60,17 @@ export const startOptonnani = () => {
 }
 
  /* Interesting Discord.JS Events:
-        MessageCreate = 'messageCreate',
-        MessageDelete = 'messageDelete',
-        MessageUpdate = 'messageUpdate',
+    MessageCreate = 'messageCreate',
+    MessageDelete = 'messageDelete',
+    MessageUpdate = 'messageUpdate',
 
-        MessageBulkDelete = 'messageDeleteBulk',
-        MessageReactionAdd = 'messageReactionAdd',
-        MessageReactionRemove = 'messageReactionRemove',
-        MessageReactionRemoveAll = 'messageReactionRemoveAll',
-        MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
+    MessageBulkDelete = 'messageDeleteBulk',
+    MessageReactionAdd = 'messageReactionAdd',
+    MessageReactionRemove = 'messageReactionRemove',
+    MessageReactionRemoveAll = 'messageReactionRemoveAll',
+    MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
 
-        VoiceServerUpdate = 'voiceServerUpdate',
-        VoiceStateUpdate = 'voiceStateUpdate',
-        TypingStart = 'typingStart',
-    */
+    VoiceServerUpdate = 'voiceServerUpdate',
+    VoiceStateUpdate = 'voiceStateUpdate',
+    TypingStart = 'typingStart',
+*/

@@ -6,6 +6,7 @@ import { isTruthy, isTruthyAsync } from "../util/isTruthy";
 import { logger, LogLevel } from "../util/logger";
 import { encodeAndDecodeString } from '../util/util';
 import { httpPost } from "./httpService";
+import path from 'path';
 const apiKey = process.env.OPENAI_API_KEY;
 const configuration = new Configuration({
     apiKey: apiKey
@@ -50,21 +51,24 @@ export const handleGptResponse = async (prompt: string, model?: string, max_toke
 let date: Date | null = null;
 
 /**
- * 
+ * Writes the file bit by bit.
+ * System first.
+ * User second.
+ * Assistant last.
  * @param primer 
  * @param messages 
- * @param fileName 
+ * @param logName 
  * @returns 
 */
-export const chatGptResponse = async (primer: string, message: string, userId: string, fileName?: string) => {
+export const chatGptResponse = async (primer: string, message: string, userId: string, logName?: string) => {
     if (!await isTruthyAsync(date)) date = new Date();
-    fileName = fileName ? `./src/logs/${fileName}_${userId}.json` : `ChatGPT-Log_${userId}-${date}.json`;
+    logName = logName ? `./src/logs/${logName}_${userId}.json` : `ChatGPT-Log_${userId}-${date}.json`;
     
     // If the log file doesn't exist yet.
-    const fileExists = fs.existsSync(fileName);
+    const fileExists = fs.existsSync(logName);
     if (!fileExists) {
         primer = await encodeAndDecodeString(primer);
-        fs.writeFileSync(fileName, JSON.stringify([{ role: "system", content: primer }], null, 4));
+        fs.writeFileSync(logName, JSON.stringify([{ role: "system", content: primer }], null, 4));
     }
 
     // Encode the prompt to ASCII and decode it back to UTF-8.
@@ -76,18 +80,18 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
     };
       
     try {
-        const jsonString = fs.readFileSync(fileName, 'utf8');
+        const jsonString = fs.readFileSync(logName, 'utf8');
         const jsonArray = JSON.parse(jsonString);
         jsonArray.push(userEntry);
         const newJsonString = JSON.stringify(jsonArray);
-        fs.writeFileSync(fileName, newJsonString, 'utf8');
+        fs.writeFileSync(logName, newJsonString, 'utf8');
     } catch (err) {
         console.error(err);
     }
 
     let messages: string[] = [];
     try {
-        const jsonString = fs.readFileSync(fileName, 'utf8');
+        const jsonString = fs.readFileSync(logName, 'utf8');
         messages = JSON.parse(jsonString);
     } catch (err) {
         console.error(err);
@@ -105,17 +109,17 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
         content: resp.choices[0].message.content
     };      
     try {
-        const jsonString = fs.readFileSync(fileName, 'utf8');
+        const jsonString = fs.readFileSync(logName, 'utf8');
         const jsonArray = JSON.parse(jsonString);
         jsonArray.push(gptEntry);
         const newJsonString = JSON.stringify(jsonArray);
-        fs.writeFileSync(fileName, newJsonString, 'utf8');
+        fs.writeFileSync(logName, newJsonString, 'utf8');
     } catch (err) {
         console.error(err);
     }
 
     try {
-        const jsonString = fs.readFileSync(fileName, 'utf8');
+        const jsonString = fs.readFileSync(logName, 'utf8');
         messages = JSON.parse(jsonString);
     } catch (err) {
         console.error(err);
@@ -123,6 +127,21 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
 
     console.log("\n\n--- Current ChatGPT Conversation post-response ---\n", messages);
     return gptEntry.content;
+}
+
+/*  |--------------------|
+    |       HELPERS      |
+    |--------------------|  */
+
+/**
+ * Reads the contents of an AI file and returns them as a string.
+ * @param fileName - The name of the AI file to read.
+ * @returns The contents of the AI file as a string.
+ */
+export const readAIAsString = async (fileName: string) => {
+    const filePath = path.join(__dirname, `../ai_class_prompts/${fileName.toLowerCase()}/${fileName}.AI`);
+    const fileContents = fs.readFileSync(filePath, 'utf-8');
+    return fileContents;
 }
 
 /**
