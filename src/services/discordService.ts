@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'; dotenv.config();
 const { Client, GatewayIntentBits } = require('discord.js');
-import { chatGptResponse, handleGptResponse, readAIAsString } from '../services/gptService';
+import { chatGptResponse, handleGptResponse, setupAIPrimer } from '../services/gptService';
 import { isTruthy } from "../util/isTruthy";
 import { logger } from '../util/logger';
 import { Events, Message } from 'discord.js';
@@ -27,8 +27,8 @@ Optonnani:  Ok great! How about we call the other AI Nana?
 /**
  * Starts the Optonnani Discord bot.
  */
-export const startOptonnani = () => {
-    console.log("Starting Optonnani...");
+export const startOptonnani = async () => {
+    console.log("...Starting Optonnani...");
 
     client.on(Events.MessageCreate, async (message: Message) => {
         // Ensure the bot doesn't reply to itself.
@@ -49,11 +49,12 @@ export const startOptonnani = () => {
         //     });
 
         // ChatGPT-3.5
-        const primer = await readAIAsString("Chuck_Norris");
-        const resp = await chatGptResponse(primer, messageContent, await sha2Async(message.author.id), "Chuck_Norris"); // TODO: last 2 params optional?
+        const ai_model = await setupAIPrimer("MidJourney_Prompt_Creator", ["###"], ["Kawasaki H2 SX SE, a sleek and sporty looking motorcycle that has a distinctive design"]);
+        const resp = await chatGptResponse(ai_model, messageContent, await sha2Async(message.author.id), "MidJourney_Prompt_Creator"); // TODO: last 2 params optional?
 
-        message.reply(resp);
-        // message.channel.send(gptResponse); // Doesn't work in TS..?
+        // message.reply(resp);
+        //@ts-ignore
+        message.channel.send(resp); // Doesn't work in TS..?
     });
 
     client.login(process.env.OPTONNANI_TOKEN);

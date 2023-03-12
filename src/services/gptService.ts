@@ -101,6 +101,9 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
         model: "gpt-3.5-turbo",
         messages: messages
     }
+
+    log("Sending payload to OpenAI...", null, LogLevel.INFO);
+
     const resp = await httpPost("api.openai.com/v1/chat/completions", payload, apiKey);
     if (!await isTruthyAsync(resp)) throw new Error("No response from OpenAI.");
 
@@ -138,10 +141,22 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
  * @param fileName - The name of the AI file to read.
  * @returns The contents of the AI file as a string.
  */
-export const readAIAsString = async (fileName: string) => {
+export const setupAIPrimer = async (fileName: string, varsFrom?: string[], varsTo?: string[]) => {
     const filePath = path.join(__dirname, `../ai_class_prompts/${fileName.toLowerCase()}/${fileName}.AI`);
     const fileContents = fs.readFileSync(filePath, 'utf-8');
-    return fileContents;
+
+    let aiPrimer = fileContents;
+
+    if (isTruthy(varsFrom) && isTruthy(varsTo)) {
+        if (varsFrom!.length !== varsTo!.length) throw new Error("varsFrom and varsTo must be the same length.");
+
+        for (let i = 0; i < varsFrom!.length; i++) {
+            const myVariable = varsTo![i];
+            aiPrimer = fileContents.replace(new RegExp(varsFrom![i], "g"), myVariable);
+        }
+    }
+
+    return aiPrimer;
 }
 
 /**

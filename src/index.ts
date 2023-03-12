@@ -1,5 +1,11 @@
+import { closeDatabase, getClient, setupDatabase } from "./database/sqliteClient";
 import { startOptonnani } from "./services/discordService";
 
-console.log("Server running.");
+const startAIApplication = async () => {
+    console.log("--- Starting GPT-3.5-turbo-discord application ---");
 
-startOptonnani();
+    await setupDatabase();
+    await startOptonnani();
+};
+
+startAIApplication();

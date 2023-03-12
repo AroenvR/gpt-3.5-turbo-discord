@@ -11,3 +11,12 @@ export const encodeAndDecodeString = async (text: string): Promise<string> => {
 
     return String.fromCharCode(...charCodeArr); // Decoded
 }
+
+/**
+ * Sleeps for the given amount of milliseconds.
+ * @param ms milliseconds to sleep.
+ * @returns a promise that resolves after the given amount of milliseconds.
+ */
+export const sleepAsync = async (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

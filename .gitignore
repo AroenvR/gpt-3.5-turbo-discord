@@ -3,6 +3,8 @@
 /tmp
 *.bak
 
+src/logs
+
 .env
 .env.local
 
