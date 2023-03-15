@@ -2,11 +2,13 @@ import * as fs from 'fs-extra';
 import { Configuration, OpenAIApi } from "openai";
 import { IErrorResponse } from '../interfaces/IErrorResponse';
 import { IGPTResponse } from '../interfaces/IGPTResponse';
-import { isTruthy, isTruthyAsync } from "../util/isTruthy";
+import { isTruthy } from "../util/isTruthy";
 import { logger, LogLevel } from "../util/logger";
 import { encodeAndDecodeString } from '../util/util';
-import { httpPost } from "./httpService";
+import { httpsPost } from "./httpService";
 import path from 'path';
+import { IAIModel } from '../interfaces/IAIModel';
+import { getFakeSqliteClient, getAllMessages, insertMessage } from '../database/fakeClient';
 const apiKey = process.env.OPENAI_API_KEY;
 const configuration = new Configuration({
     apiKey: apiKey
@@ -48,9 +50,7 @@ export const handleGptResponse = async (prompt: string, model?: string, max_toke
     return resp.data.choices[0].text.replace("\n", "");
 }
 
-let date: Date | null = null;
-
-/**
+/** TODO: Update doc
  * Writes the file bit by bit.
  * System first.
  * User second.
@@ -60,75 +60,35 @@ let date: Date | null = null;
  * @param logName 
  * @returns 
 */
-export const chatGptResponse = async (primer: string, message: string, userId: string, logName?: string) => {
-    if (!await isTruthyAsync(date)) date = new Date();
-    logName = logName ? `./src/logs/${logName}_${userId}.json` : `ChatGPT-Log_${userId}-${date}.json`;
-    
-    // If the log file doesn't exist yet.
-    const fileExists = fs.existsSync(logName);
-    if (!fileExists) {
-        primer = await encodeAndDecodeString(primer);
-        fs.writeFileSync(logName, JSON.stringify([{ role: "system", content: primer }], null, 4));
-    }
+export const chatGptResponse = async (ai: IAIModel, primer: string, message: string, userId: string) => {
+    // Encode to ASCII and decode it back to UTF-8 to reduce potential issues.
+    primer = await encodeAndDecodeString(primer);
+    await getFakeSqliteClient(primer);
 
-    // Encode the prompt to ASCII and decode it back to UTF-8.
-    message = await encodeAndDecodeString(message);
-
-    const userEntry = {
+    const userMessage = {
         role: 'user',
-        content: message
+        content: await encodeAndDecodeString(message)
     };
-      
-    try {
-        const jsonString = fs.readFileSync(logName, 'utf8');
-        const jsonArray = JSON.parse(jsonString);
-        jsonArray.push(userEntry);
-        const newJsonString = JSON.stringify(jsonArray);
-        fs.writeFileSync(logName, newJsonString, 'utf8');
-    } catch (err) {
-        console.error(err);
-    }
 
-    let messages: string[] = [];
-    try {
-        const jsonString = fs.readFileSync(logName, 'utf8');
-        messages = JSON.parse(jsonString);
-    } catch (err) {
-        console.error(err);
-    }
+    await insertMessage(userMessage);
     
     const payload = {
         model: "gpt-3.5-turbo",
-        messages: messages
+        messages: await getAllMessages()
     }
 
     log("Sending payload to OpenAI...", null, LogLevel.INFO);
 
-    const resp = await httpPost("api.openai.com/v1/chat/completions", payload, apiKey);
-    if (!await isTruthyAsync(resp)) throw new Error("No response from OpenAI.");
+    const resp = await httpsPost("api.openai.com/v1/chat/completions", payload, apiKey);
+    if (!isTruthy(resp)) throw new Error("No response from OpenAI.");
 
     const gptEntry = {
         role: 'assistant',
         content: resp.choices[0].message.content
-    };      
-    try {
-        const jsonString = fs.readFileSync(logName, 'utf8');
-        const jsonArray = JSON.parse(jsonString);
-        jsonArray.push(gptEntry);
-        const newJsonString = JSON.stringify(jsonArray);
-        fs.writeFileSync(logName, newJsonString, 'utf8');
-    } catch (err) {
-        console.error(err);
-    }
+    };
 
-    try {
-        const jsonString = fs.readFileSync(logName, 'utf8');
-        messages = JSON.parse(jsonString);
-    } catch (err) {
-        console.error(err);
-    }
-
-    console.log("\n\n--- Current ChatGPT Conversation post-response ---\n", messages);
+    await insertMessage(gptEntry);
+    
     return gptEntry.content;
 }
 
@@ -141,18 +101,16 @@ export const chatGptResponse = async (primer: string, message: string, userId: s
  * @param fileName - The name of the AI file to read.
  * @returns The contents of the AI file as a string.
  */
-export const setupAIPrimer = async (fileName: string, varsFrom?: string[], varsTo?: string[]) => {
-    const filePath = path.join(__dirname, `../ai_class_prompts/${fileName.toLowerCase()}/${fileName}.AI`);
+export const getModelPrimer = async (aiModel: IAIModel) => {
+    const filePath = path.join(__dirname, `../ai_class_prompts/${aiModel.model.toLowerCase()}/${aiModel.model}.AI`);
     const fileContents = fs.readFileSync(filePath, 'utf-8');
 
     let aiPrimer = fileContents;
 
-    if (isTruthy(varsFrom) && isTruthy(varsTo)) {
-        if (varsFrom!.length !== varsTo!.length) throw new Error("varsFrom and varsTo must be the same length.");
-
-        for (let i = 0; i < varsFrom!.length; i++) {
-            const myVariable = varsTo![i];
-            aiPrimer = fileContents.replace(new RegExp(varsFrom![i], "g"), myVariable);
+    if (isTruthy(aiModel.symbol_to_replace) && isTruthy(aiModel.symbol_replacements)) {
+        for (let i = 0; i < aiModel.symbol_replacements.length; i++) {
+            const myVariable = aiModel.symbol_replacements[i];
+            aiPrimer = fileContents.replace(new RegExp(aiModel.symbol_to_replace, "g"), myVariable);
         }
     }
 

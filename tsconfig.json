@@ -7,7 +7,6 @@
       "jsx": "react",
       "outDir": "build",
       "rootDir": "src",
-      "composite": true,
       "removeComments": true,
       "strict": true,
       "noImplicitAny": true,
@@ -21,4 +20,4 @@
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "**/*.spec.ts", "build/**/*"]
-  }
+}

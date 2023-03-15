@@ -1,0 +1,16 @@
+{
+    "ai_models": {
+        "midjourney_prompt_creator": {
+            "model": "MidJourney_Prompt_Creator",
+            "symbol_to_replace": "###",
+            "symbol_replacements": [
+                "Kawasaki H2 SX SE, a sleek and sporty looking motorcycle that has a distinctive design"
+            ]
+        },
+        "can_i_ride": {
+            "model": "Can_I_Ride",
+            "symbol_to_replace": "",
+            "symbol_replacements": []
+        }
+    }
+}

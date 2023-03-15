@@ -16,7 +16,7 @@ let db: sqlite3.Database | null = null;
  * Gets the database client.
  * @returns A ready to use database client.
  */
-export const getClient = async () => {
+export const getSqliteClient = async () => {
     if (db === null) {
         db = new sqlite3.Database("./conversations.db", (err: any) => {
             if (err) {
@@ -40,7 +40,7 @@ export const getClient = async () => {
  * Creates the database schema.
  */
 export const setupDatabase = async () => {
-    const db = await getClient();
+    const db = await getSqliteClient();
 
     const schema = fs.readFileSync("./src/database/SQL/schema.sql", "utf8");
     db.run("PRAGMA foreign_keys = ON", (err: any) => {

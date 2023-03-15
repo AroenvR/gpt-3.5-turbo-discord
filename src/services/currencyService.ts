@@ -1,4 +1,4 @@
-import { httpGet } from './httpService';
+import { httpsGet } from './httpService';
 
 /**
  * Interface for OHLC data.
@@ -38,7 +38,7 @@ export interface IOHLCData {
  */
 export const getBtcData = async (numOfDays: number): Promise<IOHLCData[]> => {
     const url = `api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=${numOfDays}`;
-    const response = await httpGet(url).catch((error) => {
+    const response = await httpsGet(url).catch((error) => {
         console.error("getBtcData: error: ", error);
         throw error;
     });

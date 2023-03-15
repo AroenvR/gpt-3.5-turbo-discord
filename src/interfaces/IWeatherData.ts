@@ -7,6 +7,7 @@ export interface IWeatherData {
     astro: {
         sunrise: string;
         sunset: string;
+        moonIllumination: string;
     }
     forecast: IForecast[];
 }

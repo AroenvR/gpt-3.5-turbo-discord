@@ -32,32 +32,26 @@ export const logger = (fileName: string) => (message: string, object: object | s
     switch (logLevel) {
         case LogLevel.DEBUG:
             console.debug(logMessage, object ? object : "");
-            console.log("\n");
             break;
 
         case LogLevel.INFO:
             console.info(logMessage, object ? object : "");
-            console.log("\n");
             break;
 
         case LogLevel.WARNING:
             console.warn(logMessage, object ? object : "");
-            console.log("\n");
             break;
 
         case LogLevel.ERROR:
             console.error(logMessage, object ? object : "");
-            console.log("\n");
             break;
 
         case LogLevel.CRITICAL:
             console.error(`CRITICAL - ${logMessage}`, object ? object : "");
-            console.log("\n");
             break;
 
         default:
             console.log(logMessage, object ? object : "");
-            console.log("\n");
             break;
     }  
 };
