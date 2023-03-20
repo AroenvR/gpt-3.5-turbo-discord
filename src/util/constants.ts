@@ -14,6 +14,10 @@ export const pubSubEvents = {
 }
 
 export const aiModelNames = {
+    OPTONNANI: 'Optonnani',
+    NANAAI: 'NanaAI',
     MIDJOURNEY_PROMPT_CREATOR: 'MidJourney_Prompt_Creator',
     CAN_I_RIDE: 'Can_I_Ride',
+    PROMPT_IMPROVER: 'Prompt_Improver',
+    AI_HR_PAPER_HELPER: 'AI_HR_Paper_Helper',
 }

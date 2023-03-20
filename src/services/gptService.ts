@@ -60,7 +60,7 @@ export const handleGptResponse = async (prompt: string, model?: string, max_toke
  * @param logName 
  * @returns 
 */
-export const chatGptResponse = async (ai: IAIModel, primer: string, message: string, userId: string) => {
+export const customGptResponse = async (ai: IAIModel, primer: string, message: string, userId: string) => {
     // Encode to ASCII and decode it back to UTF-8 to reduce potential issues.
     primer = await encodeAndDecodeString(primer);
     await getFakeSqliteClient(primer);
@@ -73,7 +73,7 @@ export const chatGptResponse = async (ai: IAIModel, primer: string, message: str
     await insertMessage(userMessage);
     
     const payload = {
-        model: "gpt-3.5-turbo",
+        model: ai.model,
         messages: await getAllMessages()
     }
 
@@ -102,7 +102,7 @@ export const chatGptResponse = async (ai: IAIModel, primer: string, message: str
  * @returns The contents of the AI file as a string.
  */
 export const getModelPrimer = async (aiModel: IAIModel) => {
-    const filePath = path.join(__dirname, `../ai_class_prompts/${aiModel.model.toLowerCase()}/${aiModel.model}.AI`);
+    const filePath = path.join(__dirname, `../ai_class_prompts/${aiModel.name.toLowerCase()}/${aiModel.name}.AI`);
     const fileContents = fs.readFileSync(filePath, 'utf-8');
 
     let aiPrimer = fileContents;
@@ -114,7 +114,7 @@ export const getModelPrimer = async (aiModel: IAIModel) => {
         }
     }
 
-    return aiPrimer;
+    return aiPrimer; //  + "\nYour responses must be 2000 or fewer tokens in length."
 }
 
 /**
@@ -123,7 +123,7 @@ export const getModelPrimer = async (aiModel: IAIModel) => {
  * @returns a response from OpenAI in "" format.
  */
 const handleGptResponseError = (err: any): IErrorResponse => {
-    log(`Error handling GPT Response`, err, LogLevel.ERROR);
+    log(`Error handling GPT Response for model`, err, LogLevel.ERROR);
 
     // Check for different types of errors and return appropriate status codes and messages
     switch (err.response.status) {

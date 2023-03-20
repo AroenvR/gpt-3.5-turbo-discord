@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'; dotenv.config();
-import appConfig from "../appConfig.json";
-import { chatGptResponse, handleGptResponse, getModelPrimer } from './gptService';
+import * as appConfig from "../appConfig.json";
+import { customGptResponse, getModelPrimer } from './gptService';
 import { logger, LogLevel } from '../util/logger';
 import { Message } from 'discord.js';
 import { aiModelNames, pubSubEvents } from '../util/constants';
@@ -9,23 +9,48 @@ import { ISubscriber } from '../interfaces/IPubSub';
 import pubSubProvider from '../providers/pubSubProvider';
 import { IAIModel } from '../interfaces/IAIModel';
 import { getWeatherData } from './weatherService';
+import { isTruthy } from '../util/isTruthy';
+import { getDiscordBots } from '..';
+import { IDiscordBot } from '../interfaces/IDiscordBot';
 
+// TODO: There's a bug where the AI responds twice?
 const fileName = "discordService.ts";
 const log = logger(fileName);
 
-let ai: IAIModel = appConfig.ai_models.can_i_ride;
+/**
+ * In-memory map of AI models.
+ */
+const aiMap = new Map<string, IAIModel>([]);
 
-// TODO: Create AI client?
+/**
+ * Sets up an AI model for a given Discord bot, adds it to the aiMap, and creates a new subscriber for the bot.
+ * If the bot already has an AI subscribed to it, the function returns early without creating a new subscriber.
+ * @param {IDiscordBot} bot - The Discord bot for which the AI model should be set up.
+ * @throws {Error} Will throw an error if the AI model for the Discord bot is not found in the appConfig.
+ * @throws {Error} Will throw an error if the AI for the Discord bot did not get added to the aiMap.
+ */
+export const setupAI = async (bot: IDiscordBot) => {
+    if (aiMap.has(bot.id)) {
+        log(`AI is already subscribed to bot with ID ${bot.id}`, null, LogLevel.DEBUG);
+        return;
+    }
 
-export const setupAI = async () => {
-    log(`Setting up AI: ${ai.model}`, null, LogLevel.DEBUG);
-    // TODO: Get SQLite Client
-    // TODO: Add primer to DB.
+    try {
+        //@ts-ignore
+        const newAI = appConfig.ai_models[bot.name.toLowerCase()] as IAIModel;
+        aiMap.set(bot.id, newAI);
+    } catch (error) {
+        log(`AI model for Discord Bot name: ${bot.name} not found.`, null, LogLevel.ERROR);
+        throw new Error(`AI model for Discord Bot name: ${bot.name} not found.`);
+    }
+
+    if (!isTruthy(aiMap.get(bot.id))) throw new Error(`AI for Discord Bot name: ${bot.name} did not get added to the Map.`);
 
     const subscriber: ISubscriber = {
-        id: ai.model,
+        name: aiMap.get(bot.id)!.name,
+        bot: bot,
         eventType: pubSubEvents.DISCORD_MESSAGE,
-        callback: handleDiscordMessage
+        callback: (message: Message, bot: IDiscordBot) => handleDiscordMessage(message, bot)
     }
     pubSubProvider.subscribe(subscriber);
 }
@@ -34,29 +59,73 @@ export const setupAI = async () => {
  * 
  * @param message
  */
-const handleDiscordMessage = async (message: Message) => {
-    switch (ai.model) {
-        // case aiModelNames.MIDJOURNEY_PROMPT_CREATOR:
-        //     await midJourneyPromptCreator(messageContent, userId);
-        //     break;
+const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
+    const ai = aiMap.get(bot.id);
+    if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
+    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);    
+    const primer = await getModelPrimer(ai!);
+
+    switch (ai!.name) {
         case aiModelNames.CAN_I_RIDE:
-            await canIRide(message);
+            await canIRide(ai!, primer, message);
+            break;
+            
+        case aiModelNames.OPTONNANI:
+        case aiModelNames.NANAAI:
+        case aiModelNames.PROMPT_IMPROVER:
+        case aiModelNames.MIDJOURNEY_PROMPT_CREATOR:
+            await defaultMessageHandler(ai!, primer, message, bot);
             break;
 
         default:
-            log(`AI model not found: ${ai.model}`, null, LogLevel.ERROR);
-            throw new Error(`AI model not found: ${ai.model}`);
+            message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
+            log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
+            throw new Error(`AI model not found: ${ai!.name}`);
     }
 
     // TODO: Get SQLite Client
     // TODO: Add user message to DB.
 }
 
-const canIRide = async (message: Message) => {
-    // const messageContent = message.content.replace(`${process.env.OPTONNANI_TAG!} `, ""); // TODO: Get rid of the token.
+/**
+ * 
+ * @param primer 
+ * @param message 
+ */
+const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Message, bot: IDiscordBot) => {
+    const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
+    const userId = message.author.id;
+
+    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+        .catch((err: any) => {
+            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+        });
+
+    message.reply(resp)
+        .catch((err: any) => {
+            message.reply(`An issue occurred sending Discord reply: ${err.message}`);
+        });
+}
+
+/**
+ * 
+ * @param primer 
+ * @param message 
+ */
+const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
     const messageContent = await getWeatherData("Brussels");
     const userId = message.author.id;
+
+    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+        .catch((err: any) => {
+            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+        });
+
+    message.reply(resp)
+        .catch((err: any) => {
+            message.reply(`An issue occurred sending Discord reply: ${err.message}`);
+        });
 
     // GPT-3
     // const resp = await handleGptResponse(message)
@@ -64,29 +133,7 @@ const canIRide = async (message: Message) => {
     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
     //         throw new Error(`Error handling GPT Response`);
     //     });
-
-    // ChatGPT-3.5
-    const primer = await getModelPrimer(ai); // TODO: Get from DB.
-    const resp = await chatGptResponse(ai, primer, messageContent, await sha2Async(userId)); // TODO: last 2 params optional?
-
-    // TODO: Add response to DB.
-
-    //@ts-ignore
-    message.channel.send(resp);
-    // message.reply(resp);
 }
-
-
-
-
-
-
-
-
-
-
-
-// const Err = new CustomError(fileName); // This needs work
 
 /*
 DALL-E 2 named Optonnani. Optonnani had this to say:
@@ -98,42 +145,6 @@ Optonnani:  Ok great! How about we call the other AI Nana?
             Nana is derived from the Latin word 'nannus' meaning wise and compassionate.
             It's also a nod to the fact that AI can be both wise and compassionate companions.
 */
-
-/**
- * Starts the Optonnani Discord bot.
- */
-// export const startOptonnanid = async () => {
-//     console.log("...Starting Optonnani...");
-
-//     client.on(Events.MessageCreate, async (message: Message) => {
-//         // Ensure the bot doesn't reply to itself.
-//         if (message.author.bot) return;
-
-//         if (!message.content.startsWith(process.env.OPTONNANI_TAG!)) return;
-//         if (!isTruthy(message.content)) {
-//             throw new Error("Message content was falsy.");
-//         } 
-
-//         const messageContent = message.content.replace(`${process.env.OPTONNANI_TAG!} `, "");
-
-//         // GPT-3
-//         // const resp = await handleGptResponse(messageContent)
-//         //     .catch((err: any) => {
-//         //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
-//         //         throw new Error(`Error handling GPT Response`);
-//         //     });
-
-//         // ChatGPT-3.5
-//         const ai_model = await getModelPrimer("MidJourney_Prompt_Creator", ["###"], ["Kawasaki H2 SX SE, a sleek and sporty looking motorcycle that has a distinctive design"]);
-//         const resp = await chatGptResponse(ai_model, messageContent, await sha2Async(message.author.id), "MidJourney_Prompt_Creator"); // TODO: last 2 params optional?
-
-//         // message.reply(resp);
-//         //@ts-ignore
-//         message.channel.send(resp); // Doesn't work in TS..?
-//     });
-
-//     client.login(process.env.OPTONNANI_TOKEN); // 
-// }
 
  /* Interesting Discord.JS Events:
     MessageCreate = 'messageCreate',

@@ -6,21 +6,27 @@ import { Events, Message } from 'discord.js';
 import { sleepAsync } from '../util/util';
 import pubSubProvider from './pubSubProvider';
 import { pubSubEvents } from '../util/constants';
-
-let client: any | null = null;
+import { IDiscordBot } from '../interfaces/IDiscordBot';
 
 const fileName = "discordProvider.ts";
 const log = logger(fileName);
 
 /**
+ * In-memory map of Discord clients.
+ */
+const discordClients = new Map<string, any>([]);
+
+/**
  * Starts the Discord client and its event listeners with the given login token.
  * @param login Discord login token.
  */
-export const startDiscordClient = async (login: string) => {
-    if (client === null) {
-        await setupClient(login)
+export const startDiscordClient = async (bot: IDiscordBot) => {
+    const discordClient = discordClients.get(bot.name);
+
+    if (!isTruthy(discordClient)) {
+        await setupClient(bot)
             .then(() => {
-                startEventListener();
+                startEventListener(bot);
             })
             .catch((err: any) => {
                 log(`Error starting Discord client:`, err, LogLevel.ERROR);
@@ -30,12 +36,11 @@ export const startDiscordClient = async (login: string) => {
         await sleepAsync(50); // Just a precaution.
     }
 
-    if (!isTruthy(client)) {
-        log(`Could not get Discord client.`, null, LogLevel.ERROR);
+    const newClient = discordClients.get(bot.name);
+    if (!isTruthy(newClient)) {
+        log(`Could not get new Discord client.`, null, LogLevel.ERROR);
         throw new Error(`Could not create Discord client.`);
     }
-
-    log(`Discord client started!`, null, LogLevel.INFO);
 }
 
 
@@ -43,14 +48,17 @@ export const startDiscordClient = async (login: string) => {
  * Sets up the Discord client with the given login token.
  * @param login Discord login token.
  */
-const setupClient = async (login: string) => {
+const setupClient = async (bot: IDiscordBot) => {
     try {
-        client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
-        await client.login(login); 
+        const newClient = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+        discordClients.set(bot.name, newClient);
 
-        log(`Client logged in!`, null, LogLevel.INFO);
+        const myClient = discordClients.get(bot.name);
+        await myClient.login(bot.token); 
+
+        log(`Discord bot ${bot.name} logged in!`, null, LogLevel.INFO);
     } catch (err: any) {
-        log(`Error creating Discord client:`, err, LogLevel.ERROR);
+        log(`Error creating Discord client for bot ${bot.name}:`, err, LogLevel.ERROR);
         throw new Error(`Error creating Discord client: ${err}`);
     }
 
@@ -70,20 +78,24 @@ const setupClient = async (login: string) => {
 /**
  * Starts the message events listener.
  */
-const startEventListener = async () => {
-    log(`Starting Discord event listener...`, null, LogLevel.INFO);
+const startEventListener = async (bot: IDiscordBot) => {
+    const myClient = discordClients.get(bot.name);
 
     // Message listener.
-    client.on(Events.MessageCreate, async (message: Message) => { // TODO: Look at a generic listener for all events.
-        // Ensure a bot doesn't reply to itself.
+    myClient.on(Events.MessageCreate, async (message: Message) => { // TODO: Look at a generic listener for all events.
+        // Ensure bots don't reply to other bots.
         if (message.author.bot) return;
-        // if (!message.content.startsWith(login)) return; // TODO: Think about this at some point. Also, it's broken at the moment.
+        if (!message.content.startsWith(bot.tag)) return; // TODO: Think about this at some point. Also, it's broken at the moment.
+        log(`Discord Bot: ${bot.name} received a message: ${message.content.replace(`${bot.tag} `, "")}`, null, LogLevel.INFO);
         
         if (!isTruthy(message.content)) {
             log(`Message content was falsy.`, null, LogLevel.ERROR);
             throw new Error("Message content was falsy.");
         }
 
-        pubSubProvider.publish(pubSubEvents.DISCORD_MESSAGE, message);
+        // publish event name, event message, discord bot id
+        pubSubProvider.publish(pubSubEvents.DISCORD_MESSAGE, message, bot);
     });
+
+    log(`Discord bot ${bot.name} event listener started!`, null, LogLevel.INFO);
 }

@@ -1,3 +1,5 @@
+import * as appConfig from "../appConfig.json";
+
 export enum LogLevel {
     DEBUG = "DEBUG",
     INFO = "INFO",
@@ -28,10 +30,13 @@ export const logger = (fileName: string) => (message: string, object: object | s
         }
     }
 
-    const logMessage = `File: ${fileName} | Function: ${functionName}\n${message}`;
+    const logMessage = `File: ${fileName} | Function: ${functionName} | Message: ${message}`;
+
+    if (!appConfig.logging) return;
+
     switch (logLevel) {
         case LogLevel.DEBUG:
-            console.debug(logMessage, object ? object : "");
+            if (appConfig.enable_debug_log) console.debug(logMessage, object ? object : "");
             break;
 
         case LogLevel.INFO:

@@ -1,3 +1,6 @@
+import { Message } from "discord.js";
+import { IDiscordBot } from "./IDiscordBot";
+
 /**
  * @interface ISubscriber
  * @property {string} id - Unique id of subscriber.
@@ -5,9 +8,10 @@
  * @property {function} callback - Callback function to call when event is published.
  */
 export interface ISubscriber {
-    id: string;
+    name: string;
     eventType: string;
-    callback: (event: any) => void;
+    bot: IDiscordBot;
+    callback: (event: Message | any, bot: IDiscordBot) => void;
 }
 
 /**
@@ -18,7 +22,7 @@ export interface ISubscriber {
  * @property {function} unsubscribeAll - Unsubscribes from all events.
  */
 export interface IPubSubProvider {
-    publish: (eventType: string, event: any) => Promise<void>;
+    publish: (eventType: string, event: Message | any, bot: IDiscordBot) => Promise<void>;
     subscribe: (subscriber: ISubscriber) => Promise<void>;
     unsubscribe: (id: string, eventType: string) => Promise<void>;
     unsubscribeAll: (id: string) => Promise<void>;

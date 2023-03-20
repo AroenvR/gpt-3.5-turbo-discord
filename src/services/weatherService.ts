@@ -29,8 +29,6 @@ export const getWeatherData = async (location: string) => { // Brussels
 export const formatWeatherData = async (data: any): Promise<IWeatherData> => {
     if (!isTruthy(data)) return Promise.reject("formatWeatherData (service): Data is falsy.");
 
-    console.log("WIP weatherData:",data);
-
     const weatherData: IWeatherData = {
         astro: {
             sunrise: data.forecast.forecastday[0].astro.sunrise,

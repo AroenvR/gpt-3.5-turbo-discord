@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "AI_NAME=Prompt_Improver nodemon index.js",
+    "start:midjourney_creator": "AI_NAME=MidJourney_Prompt_Creator nodemon index.js",
+    "start:prompt_improver": "AI_NAME=Prompt_Improver nodemon index.js",
+    "start:sex_advisor": "AI_NAME=Sex_Advisor nodemon index.js"
   },
   "repository": {
     "type": "git",
