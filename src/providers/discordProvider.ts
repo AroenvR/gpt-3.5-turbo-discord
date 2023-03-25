@@ -83,6 +83,11 @@ const startEventListener = async (bot: IDiscordBot) => {
 
     // Message listener.
     myClient.on(Events.MessageCreate, async (message: Message) => { // TODO: Look at a generic listener for all events.
+        if (!isTruthy(bot.tag)) {
+            log(`Bot tag was falsy! Please fill it in: ${message.content}`, null, LogLevel.ERROR);
+            return;
+        }
+
         // Ensure bots don't reply to other bots.
         if (message.author.bot) return;
         if (!message.content.startsWith(bot.tag)) return; // TODO: Think about this at some point. Also, it's broken at the moment.

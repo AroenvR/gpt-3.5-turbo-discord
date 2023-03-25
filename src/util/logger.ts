@@ -48,7 +48,7 @@ export const logger = (fileName: string) => (message: string, object: object | s
             break;
 
         case LogLevel.ERROR:
-            console.error(logMessage, object ? object : "");
+            console.error("ERROR - " + logMessage, object ? object : "");
             break;
 
         case LogLevel.CRITICAL:

@@ -79,9 +79,10 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
             break;
 
         default:
-            message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
-            log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
-            throw new Error(`AI model not found: ${ai!.name}`);
+            await defaultMessageHandler(ai!, primer, message, bot);
+            // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
+            // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
+            // throw new Error(`AI model not found: ${ai!.name}`);
     }
 
     // TODO: Get SQLite Client
@@ -97,13 +98,32 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
+    // @ts-ignore
+    message.channel.sendTyping();
+
     const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
+        // Please split the response to less than 2000 characters and then send the response in chunks.
+    let maxLength = 1999;
+    let totalLength = resp.length;
+    if (totalLength > maxLength) {
+        let chunks = await splitMessage(resp);
+        chunks.forEach(async (chunk: string) => {
+            await message.reply(chunk)
+                .catch((err: any) => {
+                    log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                    message.reply(`An issue occurred sending Discord reply: ${err.message}`);
+                }); 
+        });
+        return;
+    } 
+
     message.reply(resp)
         .catch((err: any) => {
+            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
             message.reply(`An issue occurred sending Discord reply: ${err.message}`);
         });
 }
@@ -122,10 +142,28 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
+    // Please split the response to less than 2000 characters and then send the response in chunks.
+    let maxLength = 1999;
+    let totalLength = resp.length;
+    if (totalLength > maxLength) {
+        console.log("Max size exceeded!");
+        let chunks = await splitMessage(resp);
+        chunks.forEach(async (chunk: string) => {
+            await message.reply(chunk)
+                .catch((err: any) => {
+                    log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                    message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+                }); 
+        });
+        return;
+    } 
+
+    console.log("Message size:", totalLength);
     message.reply(resp)
         .catch((err: any) => {
-            message.reply(`An issue occurred sending Discord reply: ${err.message}`);
-        });
+            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                    message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+        });    
 
     // GPT-3
     // const resp = await handleGptResponse(message)
@@ -133,6 +171,28 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
     //         throw new Error(`Error handling GPT Response`);
     //     });
+}
+
+/**
+ * Split a message into chunks of 1999 characters or less.
+ * @param message to split.
+ * @returns array of chunks.
+ */
+const splitMessage = async (message: string): Promise<string[]> => {
+    const maxLength = 1999;
+    let chunks = [];
+  
+    if (message.length <= maxLength) {
+      chunks.push(message);
+    } else {
+      while (message.length > 0) {
+        let chunk = message.slice(0, maxLength);
+        chunks.push(chunk);
+        message = message.slice(maxLength);
+      }
+    }
+  
+    return chunks;
 }
 
 /*

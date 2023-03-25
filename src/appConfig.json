@@ -1,6 +1,6 @@
 {
     "logging": true,
-    "enable_debug_log": false,
+    "enable_debug_log": true,
     "discord_bots": [
         "Optonnani",
         "NanaAI"
@@ -9,6 +9,12 @@
         "optonnani": {
             "model": "gpt-4",
             "name": "Optonnani",
+            "symbol_to_replace": "",
+            "symbol_replacements": []
+        },
+        "optonnanipt-4":{
+            "model": "gpt-4",
+            "name": "OptonnaniPT-4",
             "symbol_to_replace": "",
             "symbol_replacements": []
         },
@@ -40,6 +46,12 @@
         },
         "ai_hr_paper_helper": {
             "name": "AI_HR_Paper_Helper",
+            "model": "gpt-4",
+            "symbol_to_replace": "",
+            "symbol_replacements": []
+        },
+        "copy-cat": {
+            "name": "Copy-Cat",
             "model": "gpt-4",
             "symbol_to_replace": "",
             "symbol_replacements": []
