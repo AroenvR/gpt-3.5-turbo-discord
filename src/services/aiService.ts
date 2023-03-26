@@ -12,6 +12,8 @@ import { getWeatherData } from './weatherService';
 import { isTruthy } from '../util/isTruthy';
 import { getDiscordBots } from '..';
 import { IDiscordBot } from '../interfaces/IDiscordBot';
+import { encodeAndDecodeString, sleepAsync } from '../util/util';
+import { getFakeSqliteClient } from '../database/fakeClient';
 
 // TODO: There's a bug where the AI responds twice?
 const fileName = "discordService.ts";
@@ -56,57 +58,55 @@ export const setupAI = async (bot: IDiscordBot) => {
 }
 
 /**
- * 
- * @param message
+ * Funnels a Discord message to the correct AI model.  
+ * Inserts the primer into the database before sending the message to the AI model.
+ * @param message Discord message to handle.
+ * @param bot Discord bot that received the message.
  */
 const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
     const ai = aiMap.get(bot.id);
     if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
-    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);    
-    const primer = await getModelPrimer(ai!);
+    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
 
     switch (ai!.name) {
         case aiModelNames.CAN_I_RIDE:
-            await canIRide(ai!, primer, message);
-            break;
-            
-        case aiModelNames.OPTONNANI:
-        case aiModelNames.NANAAI:
-        case aiModelNames.PROMPT_IMPROVER:
-        case aiModelNames.MIDJOURNEY_PROMPT_CREATOR:
-            await defaultMessageHandler(ai!, primer, message, bot);
+            await canIRide(ai!, message);
             break;
 
         default:
-            await defaultMessageHandler(ai!, primer, message, bot);
-            // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
-            // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
-            // throw new Error(`AI model not found: ${ai!.name}`);
+            await defaultMessageHandler(ai!, message, bot);
     }
-
-    // TODO: Get SQLite Client
-    // TODO: Add user message to DB.
 }
 
 /**
- * 
- * @param primer 
- * @param message 
+ * Handles a Discord message by sending it to the AI model which is subscribed to the Discord bot that received the message.
+ * @param ai AI model to use.
+ * @param message Discord message to handle.
+ * @param bot Discord bot that received the message.
  */
-const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Message, bot: IDiscordBot) => {
-    const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
-    const userId = message.author.id;
+const defaultMessageHandler = async (ai: IAIModel, message: Message, bot: IDiscordBot) => {
+    const messageContent = await encodeAndDecodeString(message.content.replace(`${bot.tag} `, ""));
+    const userId = await sha2Async(message.author.id);
+
+    const userMessage = { // TODO: Interface
+        id: userId,
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date().getTime()
+    };
+    // Insert message to DB
+    await sleepAsync(50);
 
     // @ts-ignore
     message.channel.sendTyping();
 
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+    const resp = await customGptResponse(ai)
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
-        // Please split the response to less than 2000 characters and then send the response in chunks.
+    // TODO: Create function to split message and send in chunks.
     let maxLength = 1999;
     let totalLength = resp.length;
     if (totalLength > maxLength) {
@@ -129,15 +129,17 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 }
 
 /**
- * 
+ * **CURRENTLY DEPRECATED**  
  * @param primer 
  * @param message 
  */
-const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
-    const messageContent = await getWeatherData("Brussels");
-    const userId = message.author.id;
+const canIRide = async (ai: IAIModel, message: Message) => {
+    throw new Error("CanIRide is currently deprecated.");
 
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+    const messageContent = await getWeatherData("Brussels");
+    // const userId = await sha2Async(message.author.id);
+
+    const resp = await customGptResponse(ai)
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });

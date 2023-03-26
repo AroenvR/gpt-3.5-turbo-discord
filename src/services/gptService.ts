@@ -60,21 +60,20 @@ export const handleGptResponse = async (prompt: string, model?: string, max_toke
  * @param logName 
  * @returns 
 */
-export const customGptResponse = async (ai: IAIModel, primer: string, message: string, userId: string) => {
-    // Encode to ASCII and decode it back to UTF-8 to reduce potential issues.
-    primer = await encodeAndDecodeString(primer);
-    await getFakeSqliteClient(primer);
+export const customGptResponse = async (ai: IAIModel) => {
+    let primer = await getModelPrimer(ai);
+    let messages = await getAllMessages();
+    let foo: string[] = []; // Should be primer, then prompts & responses.
 
-    const userMessage = {
-        role: 'user',
-        content: await encodeAndDecodeString(message)
-    };
-
-    await insertMessage(userMessage);
+    /* [
+            { role: "system", content: "Primer" },
+            { role: "user", content: "Hello" },
+            { role: "assistant", content: "Hi" },
+        ] */
     
     const payload = {
-        model: ai.model,
-        messages: await getAllMessages()
+        model: ai.model, // gpt-3.5-turbo or gpt-4
+        messages: foo
     }
 
     log("Sending payload to OpenAI...", null, LogLevel.INFO);
@@ -83,10 +82,11 @@ export const customGptResponse = async (ai: IAIModel, primer: string, message: s
     if (!isTruthy(resp)) throw new Error("No response from OpenAI.");
 
     const gptEntry = {
+        id: ai.name,
         role: 'assistant',
-        content: resp.choices[0].message.content
+        content: resp.choices[0].message.content,
+        timestamp: new Date().getTime()
     };
-
     await insertMessage(gptEntry);
     
     return gptEntry.content;
