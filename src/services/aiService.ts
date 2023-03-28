@@ -12,9 +12,10 @@ import { getWeatherData } from './weatherService';
 import { isTruthy } from '../util/isTruthy';
 import { getDiscordBots } from '..';
 import { IDiscordBot } from '../interfaces/IDiscordBot';
+import { sanitizeValue } from '../util/util';
 
 // TODO: There's a bug where the AI responds twice?
-const fileName = "discordService.ts";
+const fileName = "aiService.ts";
 const log = logger(fileName);
 
 /**
@@ -98,34 +99,24 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
+    const sanitized = await sanitizeValue(messageContent);
+
     // @ts-ignore
     message.channel.sendTyping();
-
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+    const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
-        // Please split the response to less than 2000 characters and then send the response in chunks.
-    let maxLength = 1999;
-    let totalLength = resp.length;
-    if (totalLength > maxLength) {
-        let chunks = await splitMessage(resp);
-        chunks.forEach(async (chunk: string) => {
-            await message.reply(chunk)
-                .catch((err: any) => {
-                    log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                    message.reply(`An issue occurred sending Discord reply: ${err.message}`);
-                }); 
-        });
-        return;
-    } 
-
-    message.reply(resp)
-        .catch((err: any) => {
-            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-            message.reply(`An issue occurred sending Discord reply: ${err.message}`);
-        });
+    let chunks = await splitMarkdownPreservingChunks(resp);
+    chunks.forEach(async (chunk: string) => {
+        await message.reply(chunk)
+            .catch((err: any) => {
+                log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+            });
+    });
+    return;
 }
 
 /**
@@ -142,28 +133,15 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
-    // Please split the response to less than 2000 characters and then send the response in chunks.
-    let maxLength = 1999;
-    let totalLength = resp.length;
-    if (totalLength > maxLength) {
-        console.log("Max size exceeded!");
-        let chunks = await splitMessage(resp);
-        chunks.forEach(async (chunk: string) => {
-            await message.reply(chunk)
-                .catch((err: any) => {
-                    log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                    message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-                }); 
-        });
-        return;
-    } 
-
-    console.log("Message size:", totalLength);
-    message.reply(resp)
-        .catch((err: any) => {
-            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                    message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-        });    
+    let chunks = await splitMarkdownPreservingChunks(resp);
+    chunks.forEach(async (chunk: string) => {
+        await message.reply(chunk)
+            .catch((err: any) => {
+                log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+            });
+    });
+    return;
 
     // GPT-3
     // const resp = await handleGptResponse(message)
@@ -194,6 +172,51 @@ const splitMessage = async (message: string): Promise<string[]> => {
   
     return chunks;
 }
+
+/**
+ * 
+ * @param str 
+ * @param maxLength 
+ * @returns 
+ */
+const splitMarkdownPreservingChunks = async (str: string, maxLength = 1999) => {
+    const chunks = [];
+    let startIndex = 0;
+  
+    const findValidBreakpoint = (index: number) => {
+      const markdownDelimiters = [
+        /\n/, // Line break
+        /\s/, // Whitespace
+        /\\/, // Backslash
+        /[_*~]/, // Markdown formatting characters: _, *, ~
+      ];
+  
+      for (const delimiter of markdownDelimiters) {
+        const match = str.slice(0, index).match(delimiter);
+        if (match) {
+          index = match.index!;
+          break;
+        }
+      }
+      return index;
+    };
+  
+    while (startIndex < str.length) {
+      let endIndex = startIndex + maxLength;
+  
+      if (endIndex < str.length) {
+        endIndex = findValidBreakpoint(endIndex);
+      }
+  
+      const chunk = str.slice(startIndex, endIndex);
+      chunks.push(chunk);
+  
+      startIndex = endIndex;
+    }
+  
+    return chunks;
+}
+  
 
 /*
 DALL-E 2 named Optonnani. Optonnani had this to say:
