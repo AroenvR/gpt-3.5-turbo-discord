@@ -15,9 +15,6 @@ const configuration = new Configuration({
 });
 const openai: OpenAIApi = new OpenAIApi(configuration);
 
-const fileName = "gptService.ts";
-const log = logger(fileName);
-
 const gptPromptArr: string[] = [];
 
 /**
@@ -77,7 +74,7 @@ export const customGptResponse = async (ai: IAIModel, primer: string, message: s
         messages: await getAllMessages()
     }
 
-    log("Sending payload to OpenAI...", null, LogLevel.INFO);
+    logger("Sending payload to OpenAI...", null, LogLevel.INFO);
 
     const resp = await httpsPost("api.openai.com/v1/chat/completions", payload, apiKey);
     if (!isTruthy(resp)) throw new Error("No response from OpenAI.");
@@ -123,7 +120,7 @@ export const getModelPrimer = async (aiModel: IAIModel) => {
  * @returns a response from OpenAI in "" format.
  */
 const handleGptResponseError = (err: any): IErrorResponse => {
-    log(`Error handling GPT Response for model`, err, LogLevel.ERROR);
+    logger(`Error handling GPT Response for model`, err, LogLevel.ERROR);
 
     // Check for different types of errors and return appropriate status codes and messages
     switch (err.response.status) {

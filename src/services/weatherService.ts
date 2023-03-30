@@ -3,9 +3,6 @@ import { httpsGet } from "./httpService";
 import { IWeatherData } from "../interfaces/IWeatherData";
 import { isTruthy } from "../util/isTruthy";
 
-const fileName = "weatherService.ts"
-const log = logger(fileName);
-
 export const getWeatherData = async (location: string) => { // Brussels
     const url = `api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${location}&days=1&aqi=no&alerts=no`;
 
@@ -21,7 +18,7 @@ export const getWeatherData = async (location: string) => { // Brussels
             return JSON.stringify(formattedData);
         })
         .catch((err) => {
-            log('Error in getting weather data:', err, LogLevel.ERROR);
+            logger('Error in getting weather data:', err, LogLevel.ERROR);
             throw new Error('Error in getting weather data.');
         });
 }

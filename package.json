@@ -1,36 +1,32 @@
 {
-  "name": "fact-or-fiction",
+  "name": "gpt-discord",
   "version": "0.1.0",
-  "description": "A card game that tests your knowledge of facts and your ability to spot fake news.",
-  "main": "index.js",
+  "description": "A server for AI management in a Discord server.",
+  "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "start:midjourney_creator": "AI_NAME=MidJourney_Prompt_Creator nodemon index.js",
-    "start:prompt_improver": "AI_NAME=Prompt_Improver nodemon index.js",
-    "start:sex_advisor": "AI_NAME=Sex_Advisor nodemon index.js"
+    "start": "nodemon --exec \"node -r esm -r ts-node/register\" src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AroenvR/fact-or-fiction.git"
+    "url": "git+https://github.com/AroenvR/gpt-discord.git"
   },
   "keywords": [],
   "author": "AroenvR",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/AroenvR/fact-or-fiction/issues"
-  },
-  "homepage": "https://github.com/AroenvR/fact-or-fiction#readme",
   "dependencies": {
     "@types/crypto-js": "^4.1.1",
     "@types/dompurify": "^3.0.0",
     "@types/fs-extra": "^11.0.1",
     "axios": "^1.2.2",
+    "caller-callsite": "^5.0.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
     "discord.js": "^14.7.1",
     "dompurify": "^3.0.1",
     "dotenv": "^16.0.3",
+    "esm": "^3.2.25",
     "express": "^4.18.2",
     "fs-extra": "^11.1.0",
     "knex": "^2.4.2",

@@ -3,8 +3,6 @@ import fs from "fs-extra";
 import { isTruthy } from "../util/isTruthy";
 import { logger, LogLevel } from "../util/logger";
 
-const log = logger("sqliteClient.ts");
-
 /**
  * The database object.
  * @type {sqlite3.Database | null}
@@ -23,13 +21,13 @@ export const getSqliteClient = async () => {
                 return console.error(err.message);
             }
             else {
-                log("SQLite database connected.", null, LogLevel.DEBUG);
+                logger("SQLite database connected.", null, LogLevel.DEBUG);
             }
         });
     }
 
     if (!isTruthy(db)) {
-        log("Could not connect to the database.", null, LogLevel.ERROR)
+        logger("Could not connect to the database.", null, LogLevel.ERROR)
         throw new Error("Could not connect to the database.");
     }
     
@@ -45,21 +43,21 @@ export const setupDatabase = async () => {
     const schema = fs.readFileSync("./src/database/SQL/schema.sql", "utf8");
     db.run("PRAGMA foreign_keys = ON", (err: any) => {
         if (err) {
-            log("Error executing PRAGMA foreign_keys:", err.message, LogLevel.ERROR);
+            logger("Error executing PRAGMA foreign_keys:", err.message, LogLevel.ERROR);
             throw new Error("Error executing PRAGMA foreign_keys: " + err.message);
         }
         else {
-           log("SQLite database foreign keys successfully enabled.", null, LogLevel.DEBUG);
+            logger("SQLite database foreign keys successfully enabled.", null, LogLevel.DEBUG);
         }
     });
 
     db.run(schema, (err: any) => {
         if (err) {
-            log("Error creating Database schema:", err.message, LogLevel.ERROR);
+            logger("Error creating Database schema:", err.message, LogLevel.ERROR);
             throw new Error("Error creating Database schema: " + err.message);
         }
         else {
-            log("SQLite database schema successfully created.", null, LogLevel.DEBUG);
+            logger("SQLite database schema successfully created.", null, LogLevel.DEBUG);
         }
     });
 };

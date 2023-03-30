@@ -1,9 +1,6 @@
-import DOMPurify from "dompurify";
+import * as DOMPurify from "dompurify";
 import { isTruthy } from "./isTruthy";
 import { logger, LogLevel } from "./logger";
-
-const fileName = "util.ts";
-const log = logger(fileName);
 
 /**
  * Encode to ASCII and decode back to UTF-8.
@@ -27,7 +24,7 @@ export const encodeAndDecodeString = async (text: string): Promise<string> => {
  */
 export const sanitizeValue = async (val: any): Promise<any> => {
     if (typeof val === 'string') {
-      return DOMPurify.sanitize(val);
+      return DOMPurify.sanitize(val); // Not sure why, but this is crashing. Stopped sanitizing for now. TODO: Re-enable sanitizing.
 
     } else if (Array.isArray(val)) {
       return val.map(sanitizeValue);

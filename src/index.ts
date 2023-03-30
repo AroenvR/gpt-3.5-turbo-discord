@@ -6,9 +6,6 @@ import { setupAI } from "./services/aiService";
 import { isTruthy } from "./util/isTruthy";
 import { logger, LogLevel } from "./util/logger";
 
-const fileName = "index.ts";
-const log = logger(fileName);
-
 const setupClients = async () => {
     console.log("--- Starting GPT-discord application ---");
 
@@ -68,8 +65,8 @@ export const getDiscordBots = async (): Promise<IDiscordBot[]> => {
 
     toReturn.forEach((bot) => {
         for (const [key, val] of Object.entries(bot)) {
-            if (!isTruthy(key)) log(`A Discord Bot is missing a key!`, null, LogLevel.ERROR);
-            if (!isTruthy(val)) log(`Discord Bot: ${bot.name} is missing a value for: ${key}`, null, LogLevel.ERROR);
+            if (!isTruthy(key)) logger(`A Discord Bot is missing a key!`, null, LogLevel.ERROR);
+            if (!isTruthy(val)) logger(`Discord Bot: ${bot.name} is missing a value for: ${key}`, null, LogLevel.ERROR);
         }
     });
     
