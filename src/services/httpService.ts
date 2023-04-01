@@ -1,4 +1,9 @@
 import axios from 'axios';
+import { isTruthy } from '../util/isTruthy';
+import { logger, LogLevel } from '../util/logger';
+
+const fileName = "httpService.ts";
+const log = logger(fileName);
 
 // const axiosService = axios.create({
 //     baseURL: 'https://',
@@ -37,6 +42,9 @@ export const httpsGet = async (url: string): Promise<void | object | any>=> {
  * @returns server's response object if response.ok, else returns void.
  */
 export const httpsPost = async (url: string, payload: any, apiKey?: string): Promise<void | object | any>=> {
+    if (!isTruthy(url) || typeof url !== 'string') throw new Error("Invalid url provided to httpsPost");
+    if (!isTruthy(payload)) throw new Error("Invalid payload parameter");
+
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
@@ -45,7 +53,14 @@ export const httpsPost = async (url: string, payload: any, apiKey?: string): Pro
     return axios.post(`https://${url}`, payload, { headers })
         .then((response) => {
             if (response.status === 200) {
-                return response.data;
+                try {
+                    log("Response successfully received.", null, LogLevel.DEBUG);
+                    return response.data;
+                } catch (error) {
+                    log("An issue occurred returning response.data: ", error, LogLevel.ERROR);
+                    log("Response was:", response, LogLevel.DEBUG);
+                    throw error;
+                }
             }
         })
         .catch((error) => {
@@ -53,6 +68,12 @@ export const httpsPost = async (url: string, payload: any, apiKey?: string): Pro
             console.error("Error code: ", error.code);
             console.error("httpPost: error.response.status: ", error.response.status);
             console.error("httpPost: error.response.statusText: ", error.response.statusText);
-            throw error;
+
+            if (error instanceof Error) {
+                throw error;
+            } else {
+                console.error("Error object is not an instance of Error: ", error);
+                throw new Error("Unexpected error occurred");
+            }
         });
 }

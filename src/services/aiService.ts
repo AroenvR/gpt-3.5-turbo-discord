@@ -69,7 +69,8 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
 
     switch (ai!.name) {
         case aiModelNames.CAN_I_RIDE:
-            await canIRide(ai!, primer, message);
+            console.error("Can I Ride? WIP!");
+            // await canIRide(ai!, primer, message);
             break;
             
         case aiModelNames.OPTONNANI:
@@ -99,16 +100,18 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
-    const sanitized = await sanitizeValue(messageContent);
+    // const sanitized = await sanitizeValue(messageContent);
 
     // @ts-ignore
     message.channel.sendTyping();
-    const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
+    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
-    let chunks = await splitMarkdownPreservingChunks(resp);
+    log("AI Response: " + resp, null, LogLevel.DEBUG);
+
+    let chunks = await splitMessage(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
             .catch((err: any) => {
@@ -124,32 +127,32 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
  * @param primer 
  * @param message 
  */
-const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
-    const messageContent = await getWeatherData("Brussels");
-    const userId = message.author.id;
+// const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
+//     const messageContent = await getWeatherData("Brussels");
+//     const userId = message.author.id;
 
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
-        .catch((err: any) => {
-            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
-        });
+//     const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+//         .catch((err: any) => {
+//             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+//         });
 
-    let chunks = await splitMarkdownPreservingChunks(resp);
-    chunks.forEach(async (chunk: string) => {
-        await message.reply(chunk)
-            .catch((err: any) => {
-                log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-            });
-    });
-    return;
+//     let chunks = await splitMarkdownPreservingChunks(resp);
+//     chunks.forEach(async (chunk: string) => {
+//         await message.reply(chunk)
+//             .catch((err: any) => {
+//                 log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+//                 message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+//             });
+//     });
+//     return;
 
-    // GPT-3
-    // const resp = await handleGptResponse(message)
-    //     .catch((err: any) => {
-    //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
-    //         throw new Error(`Error handling GPT Response`);
-    //     });
-}
+//     // GPT-3
+//     // const resp = await handleGptResponse(message)
+//     //     .catch((err: any) => {
+//     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
+//     //         throw new Error(`Error handling GPT Response`);
+//     //     });
+// }
 
 /**
  * Split a message into chunks of 1999 characters or less.
@@ -158,7 +161,7 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
  */
 const splitMessage = async (message: string): Promise<string[]> => {
     const maxLength = 1999;
-    let chunks = [];
+    let chunks: string[] = [];
   
     if (message.length <= maxLength) {
       chunks.push(message);
@@ -180,7 +183,7 @@ const splitMessage = async (message: string): Promise<string[]> => {
  * @returns 
  */
 const splitMarkdownPreservingChunks = async (str: string, maxLength = 1999) => {
-    const chunks = [];
+    const chunks: string[] = [];
     let startIndex = 0;
   
     const findValidBreakpoint = (index: number) => {

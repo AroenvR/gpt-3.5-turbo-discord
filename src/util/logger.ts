@@ -17,7 +17,7 @@ export enum LogLevel {
  * log("A message", null, LogLevel.DEBUG);
  * log("A message", { foo: "bar" }, LogLevel.LOG);
  */
-export const logger = (fileName: string) => (message: string, object: object | string | null, logLevel: LogLevel): void => {
+export const logger = (fileName: string) => (message: string, object: object | string | null | any, logLevel: LogLevel): void => {
 
     let functionName = "-";
     try {
