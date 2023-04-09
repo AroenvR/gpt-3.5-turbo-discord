@@ -2,9 +2,6 @@ import DOMPurify from "dompurify";
 import { isTruthy } from "./isTruthy";
 import { logger, LogLevel } from "./logger";
 
-const fileName = "util.ts";
-const log = logger(fileName);
-
 /**
  * Encode to ASCII and decode back to UTF-8.
  * @param text to encode and decode.
@@ -27,13 +24,13 @@ export const encodeAndDecodeString = async (text: string): Promise<string> => {
  */
 export const sanitizeValue = async (val: any): Promise<any> => {
     if (typeof val === 'string') {
-      return DOMPurify.sanitize(val);
+        return DOMPurify.sanitize(val);
 
     } else if (Array.isArray(val)) {
-      return val.map(sanitizeValue);
+        return val.map(sanitizeValue);
 
     } else if (val !== null && typeof val === 'object') {
-      return sanitizeObject(val);
+        return sanitizeObject(val);
     }
 
     return val;
@@ -47,11 +44,11 @@ export const sanitizeValue = async (val: any): Promise<any> => {
  */
 export const sanitizeObject = async (obj: any) => {
     const sanitizedObj: any = {};
-  
+
     for (const [key, val] of Object.entries(obj)) {
-      sanitizedObj[key] = sanitizeValue(val);
+        sanitizedObj[key] = sanitizeValue(val);
     }
-  
+
     return sanitizedObj;
 };
 

@@ -15,9 +15,6 @@ const configuration = new Configuration({
 });
 const openai: OpenAIApi = new OpenAIApi(configuration);
 
-const fileName = "gptService.ts";
-const log = logger(fileName);
-
 const gptPromptArr: string[] = [];
 
 /**
@@ -43,9 +40,9 @@ export const handleGptResponse = async (prompt: string, model?: string, max_toke
         presence_penalty: 0.1,
         // best of 1
     })
-    .catch((err: any) => {
-        throw handleGptResponseError(err);
-    }) as IGPTResponse;
+        .catch((err: any) => {
+            throw handleGptResponseError(err);
+        }) as IGPTResponse;
 
     return resp.data.choices[0].text.replace("\n", "");
 }
@@ -71,13 +68,13 @@ export const customGptResponse = async (ai: IAIModel, primer: string, message: s
     };
 
     await insertMessage(userMessage);
-    
+
     const payload = {
         model: ai.model,
         messages: await getAllMessages()
     }
 
-    log("Sending payload to OpenAI...", null, LogLevel.INFO);
+    logger("Sending payload to OpenAI...", LogLevel.INFO);
 
     const resp = await httpsPost("api.openai.com/v1/chat/completions", payload, apiKey);
     if (!isTruthy(resp)) throw new Error("No response from OpenAI.");
@@ -88,7 +85,7 @@ export const customGptResponse = async (ai: IAIModel, primer: string, message: s
     };
 
     // await insertMessage(gptEntry);
-    
+
     // console.info("OpenAI response:", resp.choices[0].message.content);
     return gptEntry.content;
 }
@@ -124,29 +121,29 @@ export const getModelPrimer = async (aiModel: IAIModel) => {
  * @returns a response from OpenAI in "" format.
  */
 const handleGptResponseError = (err: any): IErrorResponse => {
-    log(`Error handling GPT Response for model`, err, LogLevel.ERROR);
+    logger(`Error handling GPT Response for model`, LogLevel.ERROR, err);
 
     // Check for different types of errors and return appropriate status codes and messages
     switch (err.response.status) {
         case 400:
-          return { status: 400, message: "Bad request: Invalid input parameters or invalid request format." };
+            return { status: 400, message: "Bad request: Invalid input parameters or invalid request format." };
 
         case 401:
             return { status: 401, message: `Unauthorized - Invalid API key: ${apiKey}` };
 
         case 403:
-          return { status: 403, message: "Forbidden: Incorrect API key or insufficient permissions." };
+            return { status: 403, message: "Forbidden: Incorrect API key or insufficient permissions." };
 
         case 429:
-          return { status: 429, message: "Too many requests: Rate limit exceeded." };
+            return { status: 429, message: "Too many requests: Rate limit exceeded." };
 
         case 500:
-          return { status: 500, message: "Internal server error: An unexpected error occurred on the server." };
+            return { status: 500, message: "Internal server error: An unexpected error occurred on the server." };
 
         case 503:
             return { status: 503, message: "Service unavailable: The OpenAI server is currently unavailable." };
 
         default:
-          return { status: 500, message: "Unknown error." };
+            return { status: 500, message: "Unknown error." };
     }
 }

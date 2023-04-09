@@ -14,10 +14,6 @@ import { getDiscordBots } from '..';
 import { IDiscordBot } from '../interfaces/IDiscordBot';
 import { sanitizeValue } from '../util/util';
 
-// TODO: There's a bug where the AI responds twice?
-const fileName = "aiService.ts";
-const log = logger(fileName);
-
 /**
  * In-memory map of AI models.
  */
@@ -32,7 +28,7 @@ const aiMap = new Map<string, IAIModel>([]);
  */
 export const setupAI = async (bot: IDiscordBot) => {
     if (aiMap.has(bot.id)) {
-        log(`AI is already subscribed to bot with ID ${bot.id}`, null, LogLevel.DEBUG);
+        logger(`AI is already subscribed to bot with ID ${bot.id}`, LogLevel.DEBUG);
         return;
     }
 
@@ -41,7 +37,7 @@ export const setupAI = async (bot: IDiscordBot) => {
         const newAI = appConfig.ai_models[bot.name.toLowerCase()] as IAIModel;
         aiMap.set(bot.id, newAI);
     } catch (error) {
-        log(`AI model for Discord Bot name: ${bot.name} not found.`, null, LogLevel.ERROR);
+        logger(`AI model for Discord Bot name: ${bot.name} not found.`, LogLevel.ERROR);
         throw new Error(`AI model for Discord Bot name: ${bot.name} not found.`);
     }
 
@@ -64,7 +60,7 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
     const ai = aiMap.get(bot.id);
     if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
-    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
+    logger(`AI: ${ai!.name} handling Discord Message`, LogLevel.DEBUG);
     const primer = await getModelPrimer(ai!);
 
     switch (ai!.name) {
@@ -73,17 +69,17 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
             // await canIRide(ai!, primer, message);
             break;
 
-        case aiModelNames.OPTONNANI:
-        case aiModelNames.NANAAI:
-        case aiModelNames.PROMPT_IMPROVER:
-        case aiModelNames.MIDJOURNEY_PROMPT_CREATOR:
-            await defaultMessageHandler(ai!, primer, message, bot);
-            break;
+        // case aiModelNames.OPTONNANI:
+        // case aiModelNames.NANAAI:
+        // case aiModelNames.PROMPT_IMPROVER:
+        // case aiModelNames.MIDJOURNEY_PROMPT_CREATOR:
+        //     await defaultMessageHandler(ai!, primer, message, bot);
+        //     break;
 
         default:
             await defaultMessageHandler(ai!, primer, message, bot);
         // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
-        // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
+        // logger(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
         // throw new Error(`AI model not found: ${ai!.name}`);
     }
 
@@ -109,13 +105,13 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         });
 
-    log("AI Response: " + resp, null, LogLevel.DEBUG);
+    logger("AI Response: " + resp, LogLevel.DEBUG);
 
     // let chunks = await splitMessage(resp);
     // chunks.forEach(async (chunk: string) => {
     await message.reply(resp)
         .catch((err: any) => {
-            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+            logger(`Failed to send AI Response to Discord:\n${resp}`, LogLevel.ERROR, err);
             message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
         });
     // });
@@ -140,7 +136,7 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 //     chunks.forEach(async (chunk: string) => {
 //         await message.reply(chunk)
 //             .catch((err: any) => {
-//                 log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+//                 logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
 //                 message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
 //             });
 //     });
@@ -149,7 +145,7 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 //     // GPT-3
 //     // const resp = await handleGptResponse(message)
 //     //     .catch((err: any) => {
-//     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
+//     //         logger(`Error handling GPT Response`, err, LogLevel.ERROR);
 //     //         throw new Error(`Error handling GPT Response`);
 //     //     });
 // }

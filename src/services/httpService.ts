@@ -2,9 +2,6 @@ import axios from 'axios';
 import { isTruthy } from '../util/isTruthy';
 import { logger, LogLevel } from '../util/logger';
 
-const fileName = "httpService.ts";
-const log = logger(fileName);
-
 // const axiosService = axios.create({
 //     baseURL: 'https://',
 //     headers: {
@@ -19,7 +16,7 @@ const log = logger(fileName);
  * @returns server's response object if response.ok, else returns void.
  * Response.ok: https://developer.mozilla.org/en-US/docs/Web/API/Response/ok
  */
-export const httpsGet = async (url: string): Promise<void | object | any>=> {
+export const httpsGet = async (url: string): Promise<void | object | any> => {
     return axios.get(`https://${url}`)
         .then((response) => {
             if (response.status === 200) {
@@ -41,7 +38,7 @@ export const httpsGet = async (url: string): Promise<void | object | any>=> {
  * @param payload The data to send to the server.
  * @returns server's response object if response.ok, else returns void.
  */
-export const httpsPost = async (url: string, payload: any, apiKey?: string): Promise<void | object | any>=> {
+export const httpsPost = async (url: string, payload: any, apiKey?: string): Promise<void | object | any> => {
     if (!isTruthy(url) || typeof url !== 'string') throw new Error("Invalid url provided to httpsPost");
     if (!isTruthy(payload)) throw new Error("Invalid payload parameter");
 
@@ -54,11 +51,11 @@ export const httpsPost = async (url: string, payload: any, apiKey?: string): Pro
         .then((response) => {
             if (response.status === 200) {
                 try {
-                    log("Response successfully received.", null, LogLevel.DEBUG);
+                    logger("Response successfully received.", LogLevel.DEBUG);
                     return response.data;
                 } catch (error) {
-                    log("An issue occurred returning response.data: ", error, LogLevel.ERROR);
-                    log("Response was:", response, LogLevel.DEBUG);
+                    logger("An issue occurred returning response.data: ", LogLevel.ERROR, error);
+                    logger("Response was:", LogLevel.DEBUG, response);
                     throw error;
                 }
             }
