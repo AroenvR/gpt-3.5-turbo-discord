@@ -101,24 +101,22 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     startTyping(message);
 
     const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
-        .catch((err: any) => {
-            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+        .then((resp: string) => {
+            logger("AI Response: " + resp, null, LogLevel.DEBUG);
+            return resp;
         })
-        .finally(() => {
-            stopTyping();
+        .catch((err: any) => {
+            return `${ai.name} had an issue occur getting GPT response: ${err}`
         });
 
-    logger("AI Response: " + resp, null, LogLevel.DEBUG);
-    let chunks = await splitMarkdownPreservingChunks(resp);
+    let chunks = await splitMessage(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
             .catch((err: any) => {
                 logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
                 message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
             })
-            .finally(() => {
-                stopTyping();
-            });
+            .finally(stopTyping);
     });
     return;
 }
@@ -178,7 +176,7 @@ const splitMessage = async (message: string): Promise<string[]> => {
 }
 
 /**
- * 
+ * **DOES NOT WORK YET - WIP**
  * @param str 
  * @param maxLength 
  * @returns 

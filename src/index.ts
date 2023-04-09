@@ -31,14 +31,14 @@ setupClients();
 
 export const getDiscordBots = async (): Promise<IDiscordBot[]> => {
     let toReturn = [
-        { 
+        {
             name: "Optonnani",
             token: process.env.OPTONNANI_TOKEN!,
             id: process.env.OPTONNANI_ID!,
             tag: process.env.OPTONNANI_TAG!
-        }, 
-        { 
-            name: "NanaAI", 
+        },
+        {
+            name: "NanaAI",
             token: process.env.NANA_TOKEN!,
             id: process.env.NANA_ID!,
             tag: process.env.NANA_TAG!
@@ -69,6 +69,6 @@ export const getDiscordBots = async (): Promise<IDiscordBot[]> => {
             if (!isTruthy(val)) logger(`Discord Bot: ${bot.name} is missing a value for: ${key}`, null, LogLevel.ERROR);
         }
     });
-    
+
     return toReturn;
 }
