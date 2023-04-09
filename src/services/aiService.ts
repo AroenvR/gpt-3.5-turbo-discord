@@ -96,15 +96,19 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
-    // const sanitized = await sanitizeValue(messageContent);
+    const sanitized = messageContent; // TODO: fix sanitizing. utils => sanitizeValue()
+    startTyping(message);
 
-    // @ts-ignore
-    message.channel.sendTyping();
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+    const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
+        .then((resp: string) => {
+            logger("AI Response: " + resp, LogLevel.DEBUG);
+            return resp;
+        })
         .catch((err: any) => {
-            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+            return `${ai.name} had an issue occur getting GPT response: ${err}`
         });
 
+<<<<<<< Updated upstream
     logger("AI Response: " + resp, LogLevel.DEBUG);
 
     // let chunks = await splitMessage(resp);
@@ -115,6 +119,17 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
             message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
         });
     // });
+=======
+    let chunks = await splitMessage(resp);
+    chunks.forEach(async (chunk: string) => {
+        await message.reply(chunk)
+            .catch((err: any) => {
+                logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+            })
+            .finally(stopTyping);
+    });
+>>>>>>> Stashed changes
     return;
 }
 

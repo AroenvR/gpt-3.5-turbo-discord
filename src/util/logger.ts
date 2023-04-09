@@ -19,8 +19,13 @@ export enum LogLevel {
  * logger("A message", null, LogLevel.DEBUG);
  * logger("A message", { foo: "bar" }, LogLevel.INFO);
  */
+<<<<<<< Updated upstream
 export const logger = async (message: string, logLevel: LogLevel, object?: any): Promise<void> => {
     let fileName = "-";
+=======
+export const logger = (message: string, logLevel: LogLevel, object?: any): void => {
+
+>>>>>>> Stashed changes
     let functionName = "-";
 
     const customError: { stack?: string } = {};
@@ -73,4 +78,14 @@ export const logger = async (message: string, logLevel: LogLevel, object?: any):
             console.log(logMessage, object ?? "");
             break;
     }
+<<<<<<< Updated upstream
 }
+=======
+};
+
+/*
+    Usage:
+    const log = logger("fileName.ts");
+    log("Hello World!", null, LogLevel.INFO);
+*/
+>>>>>>> Stashed changes
