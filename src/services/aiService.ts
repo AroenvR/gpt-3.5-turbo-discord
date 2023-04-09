@@ -4,7 +4,7 @@ import { customGptResponse, getModelPrimer } from './gptService';
 import { logger, LogLevel } from '../util/logger';
 import { Message } from 'discord.js';
 import { aiModelNames, pubSubEvents } from '../util/constants';
-import {  sha2Async } from './cryptoService';
+import { sha2Async } from './cryptoService';
 import { ISubscriber } from '../interfaces/IPubSub';
 import pubSubProvider from '../providers/pubSubProvider';
 import { IAIModel } from '../interfaces/IAIModel';
@@ -64,7 +64,7 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
     const ai = aiMap.get(bot.id);
     if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
-    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);    
+    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
     const primer = await getModelPrimer(ai!);
 
     switch (ai!.name) {
@@ -72,7 +72,7 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
             console.error("Can I Ride? WIP!");
             // await canIRide(ai!, primer, message);
             break;
-            
+
         case aiModelNames.OPTONNANI:
         case aiModelNames.NANAAI:
         case aiModelNames.PROMPT_IMPROVER:
@@ -82,9 +82,9 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
 
         default:
             await defaultMessageHandler(ai!, primer, message, bot);
-            // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
-            // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
-            // throw new Error(`AI model not found: ${ai!.name}`);
+        // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
+        // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
+        // throw new Error(`AI model not found: ${ai!.name}`);
     }
 
     // TODO: Get SQLite Client
@@ -111,14 +111,14 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 
     log("AI Response: " + resp, null, LogLevel.DEBUG);
 
-    let chunks = await splitMessage(resp);
-    chunks.forEach(async (chunk: string) => {
-        await message.reply(chunk)
-            .catch((err: any) => {
-                log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-            });
-    });
+    // let chunks = await splitMessage(resp);
+    // chunks.forEach(async (chunk: string) => {
+    await message.reply(resp)
+        .catch((err: any) => {
+            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+            message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+        });
+    // });
     return;
 }
 
@@ -162,17 +162,17 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 const splitMessage = async (message: string): Promise<string[]> => {
     const maxLength = 1999;
     let chunks: string[] = [];
-  
+
     if (message.length <= maxLength) {
-      chunks.push(message);
+        chunks.push(message);
     } else {
-      while (message.length > 0) {
-        let chunk = message.slice(0, maxLength);
-        chunks.push(chunk);
-        message = message.slice(maxLength);
-      }
+        while (message.length > 0) {
+            let chunk = message.slice(0, maxLength);
+            chunks.push(chunk);
+            message = message.slice(maxLength);
+        }
     }
-  
+
     return chunks;
 }
 
@@ -185,41 +185,41 @@ const splitMessage = async (message: string): Promise<string[]> => {
 const splitMarkdownPreservingChunks = async (str: string, maxLength = 1999) => {
     const chunks: string[] = [];
     let startIndex = 0;
-  
+
     const findValidBreakpoint = (index: number) => {
-      const markdownDelimiters = [
-        /\n/, // Line break
-        /\s/, // Whitespace
-        /\\/, // Backslash
-        /[_*~]/, // Markdown formatting characters: _, *, ~
-      ];
-  
-      for (const delimiter of markdownDelimiters) {
-        const match = str.slice(0, index).match(delimiter);
-        if (match) {
-          index = match.index!;
-          break;
+        const markdownDelimiters = [
+            /\n/, // Line break
+            /\s/, // Whitespace
+            /\\/, // Backslash
+            /[_*~]/, // Markdown formatting characters: _, *, ~
+        ];
+
+        for (const delimiter of markdownDelimiters) {
+            const match = str.slice(0, index).match(delimiter);
+            if (match) {
+                index = match.index!;
+                break;
+            }
         }
-      }
-      return index;
+        return index;
     };
-  
+
     while (startIndex < str.length) {
-      let endIndex = startIndex + maxLength;
-  
-      if (endIndex < str.length) {
-        endIndex = findValidBreakpoint(endIndex);
-      }
-  
-      const chunk = str.slice(startIndex, endIndex);
-      chunks.push(chunk);
-  
-      startIndex = endIndex;
+        let endIndex = startIndex + maxLength;
+
+        if (endIndex < str.length) {
+            endIndex = findValidBreakpoint(endIndex);
+        }
+
+        const chunk = str.slice(startIndex, endIndex);
+        chunks.push(chunk);
+
+        startIndex = endIndex;
     }
-  
+
     return chunks;
 }
-  
+
 
 /*
 DALL-E 2 named Optonnani. Optonnani had this to say:
@@ -232,18 +232,18 @@ Optonnani:  Ok great! How about we call the other AI Nana?
             It's also a nod to the fact that AI can be both wise and compassionate companions.
 */
 
- /* Interesting Discord.JS Events:
-    MessageCreate = 'messageCreate',
-    MessageDelete = 'messageDelete',
-    MessageUpdate = 'messageUpdate',
+/* Interesting Discord.JS Events:
+   MessageCreate = 'messageCreate',
+   MessageDelete = 'messageDelete',
+   MessageUpdate = 'messageUpdate',
 
-    MessageBulkDelete = 'messageDeleteBulk',
-    MessageReactionAdd = 'messageReactionAdd',
-    MessageReactionRemove = 'messageReactionRemove',
-    MessageReactionRemoveAll = 'messageReactionRemoveAll',
-    MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
+   MessageBulkDelete = 'messageDeleteBulk',
+   MessageReactionAdd = 'messageReactionAdd',
+   MessageReactionRemove = 'messageReactionRemove',
+   MessageReactionRemoveAll = 'messageReactionRemoveAll',
+   MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
 
-    VoiceServerUpdate = 'voiceServerUpdate',
-    VoiceStateUpdate = 'voiceStateUpdate',
-    TypingStart = 'typingStart',
+   VoiceServerUpdate = 'voiceServerUpdate',
+   VoiceStateUpdate = 'voiceStateUpdate',
+   TypingStart = 'typingStart',
 */
