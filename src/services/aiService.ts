@@ -61,11 +61,7 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
     const ai = aiMap.get(bot.id);
     if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
-<<<<<<< HEAD
-    logger(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);    
-=======
-    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
->>>>>>> main
+    logger(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
     const primer = await getModelPrimer(ai!);
 
     switch (ai!.name) {
@@ -101,18 +97,10 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
-<<<<<<< HEAD
     const sanitized = messageContent; // TODO: fix sanitizing. utils => sanitizeValue()
     startTyping(message);
 
     const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
-=======
-    // const sanitized = await sanitizeValue(messageContent);
-
-    // @ts-ignore
-    message.channel.sendTyping();
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
->>>>>>> main
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         })
@@ -120,7 +108,7 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
             stopTyping();
         });
 
-<<<<<<< HEAD
+    logger("AI Response: " + resp, null, LogLevel.DEBUG);
     let chunks = await splitMarkdownPreservingChunks(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
@@ -132,18 +120,6 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
                 stopTyping();
             });
     });
-=======
-    log("AI Response: " + resp, null, LogLevel.DEBUG);
-
-    // let chunks = await splitMessage(resp);
-    // chunks.forEach(async (chunk: string) => {
-    await message.reply(resp)
-        .catch((err: any) => {
-            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-            message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-        });
-    // });
->>>>>>> main
     return;
 }
 
@@ -161,34 +137,22 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
 //             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
 //         });
 
-<<<<<<< HEAD
-    let chunks = await splitMarkdownPreservingChunks(resp);
-    chunks.forEach(async (chunk: string) => {
-        await message.reply(chunk)
-            .catch((err: any) => {
-                logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-            });
-    });
-    return;
-=======
-//     let chunks = await splitMarkdownPreservingChunks(resp);
-//     chunks.forEach(async (chunk: string) => {
-//         await message.reply(chunk)
-//             .catch((err: any) => {
-//                 log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-//                 message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-//             });
-//     });
-//     return;
->>>>>>> main
+// let chunks = await splitMarkdownPreservingChunks(resp);
+// chunks.forEach(async (chunk: string) => {
+//     await message.reply(chunk)
+//         .catch((err: any) => {
+//             logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+//             message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+//         });
+// });
+// return;
 
-//     // GPT-3
-//     // const resp = await handleGptResponse(message)
-//     //     .catch((err: any) => {
-//     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
-//     //         throw new Error(`Error handling GPT Response`);
-//     //     });
+// GPT-3
+// const resp = await handleGptResponse(message)
+//     .catch((err: any) => {
+//         log(`Error handling GPT Response`, err, LogLevel.ERROR);
+//         throw new Error(`Error handling GPT Response`);
+//     });
 // }
 
 /**
