@@ -13,6 +13,7 @@ import { isTruthy } from '../util/isTruthy';
 import { getDiscordBots } from '..';
 import { IDiscordBot } from '../interfaces/IDiscordBot';
 import { sanitizeValue } from '../util/util';
+import { startTyping, stopTyping } from './discordService';
 
 /**
  * In-memory map of AI models.
@@ -108,28 +109,15 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
             return `${ai.name} had an issue occur getting GPT response: ${err}`
         });
 
-<<<<<<< Updated upstream
-    logger("AI Response: " + resp, LogLevel.DEBUG);
-
-    // let chunks = await splitMessage(resp);
-    // chunks.forEach(async (chunk: string) => {
-    await message.reply(resp)
-        .catch((err: any) => {
-            logger(`Failed to send AI Response to Discord:\n${resp}`, LogLevel.ERROR, err);
-            message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
-        });
-    // });
-=======
     let chunks = await splitMessage(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
             .catch((err: any) => {
-                logger(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
-                message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+                logger(`Failed to send AI Response to Discord:\n${resp}`, LogLevel.ERROR, err);
+                message.reply(`AI had an issue occur sending Discord reply: ${err.message}`);
             })
             .finally(stopTyping);
     });
->>>>>>> Stashed changes
     return;
 }
 
