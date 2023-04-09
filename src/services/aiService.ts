@@ -4,7 +4,7 @@ import { customGptResponse, getModelPrimer } from './gptService';
 import { logger, LogLevel } from '../util/logger';
 import { Message } from 'discord.js';
 import { aiModelNames, pubSubEvents } from '../util/constants';
-import {  sha2Async } from './cryptoService';
+import { sha2Async } from './cryptoService';
 import { ISubscriber } from '../interfaces/IPubSub';
 import pubSubProvider from '../providers/pubSubProvider';
 import { IAIModel } from '../interfaces/IAIModel';
@@ -61,14 +61,19 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
     const ai = aiMap.get(bot.id);
     if (!isTruthy(ai)) throw new Error(`AI not found for Discord Bot: ${bot.name}`);
 
+<<<<<<< HEAD
     logger(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);    
+=======
+    log(`AI: ${ai!.name} handling Discord Message`, null, LogLevel.DEBUG);
+>>>>>>> main
     const primer = await getModelPrimer(ai!);
 
     switch (ai!.name) {
         case aiModelNames.CAN_I_RIDE:
-            await canIRide(ai!, primer, message);
+            console.error("Can I Ride? WIP!");
+            // await canIRide(ai!, primer, message);
             break;
-            
+
         case aiModelNames.OPTONNANI:
         case aiModelNames.NANAAI:
         case aiModelNames.PROMPT_IMPROVER:
@@ -78,9 +83,9 @@ const handleDiscordMessage = async (message: Message, bot: IDiscordBot) => {
 
         default:
             await defaultMessageHandler(ai!, primer, message, bot);
-            // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
-            // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
-            // throw new Error(`AI model not found: ${ai!.name}`);
+        // message.reply("I'm sorry, something went wrong. \nThe requested AI model is not available.");
+        // log(`AI model not found: ${ai!.name}`, null, LogLevel.ERROR);
+        // throw new Error(`AI model not found: ${ai!.name}`);
     }
 
     // TODO: Get SQLite Client
@@ -96,10 +101,18 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
     const messageContent = message.content.replace(`${bot.tag} `, ""); // TODO: Get rid of the token.
     const userId = message.author.id;
 
+<<<<<<< HEAD
     const sanitized = messageContent; // TODO: fix sanitizing. utils => sanitizeValue()
     startTyping(message);
 
     const resp = await customGptResponse(ai, primer, sanitized, await sha2Async(userId))
+=======
+    // const sanitized = await sanitizeValue(messageContent);
+
+    // @ts-ignore
+    message.channel.sendTyping();
+    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+>>>>>>> main
         .catch((err: any) => {
             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
         })
@@ -107,6 +120,7 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
             stopTyping();
         });
 
+<<<<<<< HEAD
     let chunks = await splitMarkdownPreservingChunks(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
@@ -118,6 +132,18 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
                 stopTyping();
             });
     });
+=======
+    log("AI Response: " + resp, null, LogLevel.DEBUG);
+
+    // let chunks = await splitMessage(resp);
+    // chunks.forEach(async (chunk: string) => {
+    await message.reply(resp)
+        .catch((err: any) => {
+            log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+            message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+        });
+    // });
+>>>>>>> main
     return;
 }
 
@@ -126,15 +152,16 @@ const defaultMessageHandler = async (ai: IAIModel, primer: string, message: Mess
  * @param primer 
  * @param message 
  */
-const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
-    const messageContent = await getWeatherData("Brussels");
-    const userId = message.author.id;
+// const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
+//     const messageContent = await getWeatherData("Brussels");
+//     const userId = message.author.id;
 
-    const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
-        .catch((err: any) => {
-            message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
-        });
+//     const resp = await customGptResponse(ai, primer, messageContent, await sha2Async(userId))
+//         .catch((err: any) => {
+//             message.reply(`${ai.name} had an issue occur getting GPT response: ${err}`);
+//         });
 
+<<<<<<< HEAD
     let chunks = await splitMarkdownPreservingChunks(resp);
     chunks.forEach(async (chunk: string) => {
         await message.reply(chunk)
@@ -144,14 +171,25 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
             });
     });
     return;
+=======
+//     let chunks = await splitMarkdownPreservingChunks(resp);
+//     chunks.forEach(async (chunk: string) => {
+//         await message.reply(chunk)
+//             .catch((err: any) => {
+//                 log(`Failed to send AI Response to Discord:\n${resp}`, null, LogLevel.ERROR);
+//                 message.reply(`Can-I-Ride had an issue occur sending Discord reply: ${err.message}`);
+//             });
+//     });
+//     return;
+>>>>>>> main
 
-    // GPT-3
-    // const resp = await handleGptResponse(message)
-    //     .catch((err: any) => {
-    //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
-    //         throw new Error(`Error handling GPT Response`);
-    //     });
-}
+//     // GPT-3
+//     // const resp = await handleGptResponse(message)
+//     //     .catch((err: any) => {
+//     //         log(`Error handling GPT Response`, err, LogLevel.ERROR);
+//     //         throw new Error(`Error handling GPT Response`);
+//     //     });
+// }
 
 /**
  * Split a message into chunks of 1999 characters or less.
@@ -160,18 +198,18 @@ const canIRide = async (ai: IAIModel, primer: string, message: Message) => {
  */
 const splitMessage = async (message: string): Promise<string[]> => {
     const maxLength = 1999;
-    let chunks = [];
-  
+    let chunks: string[] = [];
+
     if (message.length <= maxLength) {
-      chunks.push(message);
+        chunks.push(message);
     } else {
-      while (message.length > 0) {
-        let chunk = message.slice(0, maxLength);
-        chunks.push(chunk);
-        message = message.slice(maxLength);
-      }
+        while (message.length > 0) {
+            let chunk = message.slice(0, maxLength);
+            chunks.push(chunk);
+            message = message.slice(maxLength);
+        }
     }
-  
+
     return chunks;
 }
 
@@ -182,43 +220,43 @@ const splitMessage = async (message: string): Promise<string[]> => {
  * @returns 
  */
 const splitMarkdownPreservingChunks = async (str: string, maxLength = 1999) => {
-    const chunks = [];
+    const chunks: string[] = [];
     let startIndex = 0;
-  
+
     const findValidBreakpoint = (index: number) => {
-      const markdownDelimiters = [
-        /\n/, // Line break
-        /\s/, // Whitespace
-        /\\/, // Backslash
-        /[_*~]/, // Markdown formatting characters: _, *, ~
-      ];
-  
-      for (const delimiter of markdownDelimiters) {
-        const match = str.slice(0, index).match(delimiter);
-        if (match) {
-          index = match.index!;
-          break;
+        const markdownDelimiters = [
+            /\n/, // Line break
+            /\s/, // Whitespace
+            /\\/, // Backslash
+            /[_*~]/, // Markdown formatting characters: _, *, ~
+        ];
+
+        for (const delimiter of markdownDelimiters) {
+            const match = str.slice(0, index).match(delimiter);
+            if (match) {
+                index = match.index!;
+                break;
+            }
         }
-      }
-      return index;
+        return index;
     };
-  
+
     while (startIndex < str.length) {
-      let endIndex = startIndex + maxLength;
-  
-      if (endIndex < str.length) {
-        endIndex = findValidBreakpoint(endIndex);
-      }
-  
-      const chunk = str.slice(startIndex, endIndex);
-      chunks.push(chunk);
-  
-      startIndex = endIndex;
+        let endIndex = startIndex + maxLength;
+
+        if (endIndex < str.length) {
+            endIndex = findValidBreakpoint(endIndex);
+        }
+
+        const chunk = str.slice(startIndex, endIndex);
+        chunks.push(chunk);
+
+        startIndex = endIndex;
     }
-  
+
     return chunks;
 }
-  
+
 
 /*
 DALL-E 2 named Optonnani. Optonnani had this to say:
@@ -231,18 +269,18 @@ Optonnani:  Ok great! How about we call the other AI Nana?
             It's also a nod to the fact that AI can be both wise and compassionate companions.
 */
 
- /* Interesting Discord.JS Events:
-    MessageCreate = 'messageCreate',
-    MessageDelete = 'messageDelete',
-    MessageUpdate = 'messageUpdate',
+/* Interesting Discord.JS Events:
+   MessageCreate = 'messageCreate',
+   MessageDelete = 'messageDelete',
+   MessageUpdate = 'messageUpdate',
 
-    MessageBulkDelete = 'messageDeleteBulk',
-    MessageReactionAdd = 'messageReactionAdd',
-    MessageReactionRemove = 'messageReactionRemove',
-    MessageReactionRemoveAll = 'messageReactionRemoveAll',
-    MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
+   MessageBulkDelete = 'messageDeleteBulk',
+   MessageReactionAdd = 'messageReactionAdd',
+   MessageReactionRemove = 'messageReactionRemove',
+   MessageReactionRemoveAll = 'messageReactionRemoveAll',
+   MessageReactionRemoveEmoji = 'messageReactionRemoveEmoji',
 
-    VoiceServerUpdate = 'voiceServerUpdate',
-    VoiceStateUpdate = 'voiceStateUpdate',
-    TypingStart = 'typingStart',
+   VoiceServerUpdate = 'voiceServerUpdate',
+   VoiceStateUpdate = 'voiceStateUpdate',
+   TypingStart = 'typingStart',
 */

@@ -22,9 +22,29 @@ export enum LogLevel {
  * logger("A message", { foo: "bar" }, LogLevel.INFO);
  */
 export const logger = async (message: string, object: object | string | null, logLevel: LogLevel): Promise<void> => {
-    // const Callsite = (await import("caller-callsite")).default;
-    const fileName = callerCallsite()!.getFileName()?.split(/[\\/]/).pop() || "-";
-    const functionName = callerCallsite()!.getFunctionName() || "-";
+   let fileName = "-";
+    let functionName = "-";
+
+    // const customError: { stack?: string } = {};
+    // Error.captureStackTrace(customError);
+    // const stack = customError.stack || "";
+    // const lines = stack.split("\n");
+    // const callerLine = lines[3];
+    
+    // if (callerLine) {
+    //     const matchFunction = callerLine.match(/at\s(?:new\s)?(?:[^]*?\s)?(\S+)\s\(?/);
+    //     if (matchFunction && matchFunction.length > 1) {
+    //         // functionName = matchFunction[1];
+    //         // if (functionName === '<anonymous>') {
+    //         //     functionName = '-';
+    //         // }
+    //     }
+        
+    //     const matchFile = callerLine.match(/(\S+):\d+:\d+/);
+    //     if (matchFile && matchFile.length > 1) {
+    //         fileName = matchFile[1].split(/[\\/]/).pop() || "-";
+    //     }
+    // }
 
     const logMessage = `File: ${fileName} | Function: ${functionName} | Message: ${message}`;
 
