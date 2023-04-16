@@ -84,7 +84,7 @@ export const customGptResponse = async (ai: IAIModel, primer: string, message: s
         content: resp.choices[0].message.content
     };
 
-    // await insertMessage(gptEntry);
+    await insertMessage(gptEntry);
 
     // console.info("OpenAI response:", resp.choices[0].message.content);
     return gptEntry.content;

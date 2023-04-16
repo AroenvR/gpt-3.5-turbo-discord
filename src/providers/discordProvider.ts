@@ -8,9 +8,6 @@ import pubSubProvider from './pubSubProvider';
 import { pubSubEvents } from '../util/constants';
 import { IDiscordBot } from '../interfaces/IDiscordBot';
 
-const fileName = "discordProvider.ts";
-const log = logger(fileName);
-
 /**
  * In-memory map of Discord clients.
  */
@@ -29,7 +26,7 @@ export const startDiscordClient = async (bot: IDiscordBot) => {
                 startEventListener(bot);
             })
             .catch((err: any) => {
-                log(`Error starting Discord client:`, err, LogLevel.ERROR);
+                logger(`Error starting Discord client:`, LogLevel.ERROR, err);
                 throw new Error(`Error creating Discord client: ${err}`);
             });
 
@@ -38,7 +35,7 @@ export const startDiscordClient = async (bot: IDiscordBot) => {
 
     const newClient = discordClients.get(bot.name);
     if (!isTruthy(newClient)) {
-        log(`Could not get new Discord client.`, null, LogLevel.ERROR);
+        logger(`Could not get new Discord client.`, LogLevel.ERROR);
         throw new Error(`Could not create Discord client.`);
     }
 }
@@ -54,25 +51,25 @@ const setupClient = async (bot: IDiscordBot) => {
         discordClients.set(bot.name, newClient);
 
         const myClient = discordClients.get(bot.name);
-        await myClient.login(bot.token); 
+        await myClient.login(bot.token);
 
-        log(`Discord bot ${bot.name} logged in!`, null, LogLevel.INFO);
+        logger(`Discord bot ${bot.name} logged in!`, LogLevel.INFO);
     } catch (err: any) {
-        log(`Error creating Discord client for bot ${bot.name}:`, err, LogLevel.ERROR);
+        logger(`Error creating Discord client for bot ${bot.name}:`, err, LogLevel.ERROR);
         throw new Error(`Error creating Discord client: ${err}`);
     }
 
     // client = new Client({ check for other possible intents?
-        //     intents: [
-        //         GatewayIntentBits.GUILDS,
-        //         GatewayIntentBits.GUILD_MESSAGES,
-        //         GatewayIntentBits.GUILD_MESSAGE_REACTIONS,
-        //         GatewayIntentBits.GUILD_MESSAGE_TYPING,
-        //         GatewayIntentBits.DIRECT_MESSAGES,
-        //         GatewayIntentBits.DIRECT_MESSAGE_REACTIONS,
-        //         GatewayIntentBits.DIRECT_MESSAGE_TYPING,
-        //     ],
-        // });
+    //     intents: [
+    //         GatewayIntentBits.GUILDS,
+    //         GatewayIntentBits.GUILD_MESSAGES,
+    //         GatewayIntentBits.GUILD_MESSAGE_REACTIONS,
+    //         GatewayIntentBits.GUILD_MESSAGE_TYPING,
+    //         GatewayIntentBits.DIRECT_MESSAGES,
+    //         GatewayIntentBits.DIRECT_MESSAGE_REACTIONS,
+    //         GatewayIntentBits.DIRECT_MESSAGE_TYPING,
+    //     ],
+    // });
 }
 
 /**
@@ -84,17 +81,17 @@ const startEventListener = async (bot: IDiscordBot) => {
     // Message listener.
     myClient.on(Events.MessageCreate, async (message: Message) => { // TODO: Look at a generic listener for all events.
         if (!isTruthy(bot.tag)) {
-            log(`Bot tag was falsy! Please fill it in: ${message.content}`, null, LogLevel.ERROR);
+            logger(`Bot tag was falsy! Please fill it in: ${message.content}`, LogLevel.ERROR);
             return;
         }
 
         // Ensure bots don't reply to other bots.
         if (message.author.bot) return;
         if (!message.content.startsWith(bot.tag)) return; // TODO: Think about this at some point. Also, it's broken at the moment.
-        log(`Discord Bot: ${bot.name} received a message: ${message.content.replace(`${bot.tag} `, "")}`, null, LogLevel.INFO);
-        
+        logger(`Discord Bot: ${bot.name} received a message: ${message.content.replace(`${bot.tag} `, "")}`, LogLevel.INFO);
+
         if (!isTruthy(message.content)) {
-            log(`Message content was falsy.`, null, LogLevel.ERROR);
+            logger(`Message content was falsy.`, LogLevel.ERROR);
             throw new Error("Message content was falsy.");
         }
 
@@ -102,5 +99,5 @@ const startEventListener = async (bot: IDiscordBot) => {
         pubSubProvider.publish(pubSubEvents.DISCORD_MESSAGE, message, bot);
     });
 
-    log(`Discord bot ${bot.name} event listener started!`, null, LogLevel.INFO);
+    logger(`Discord bot ${bot.name} event listener started!`, LogLevel.INFO);
 }
