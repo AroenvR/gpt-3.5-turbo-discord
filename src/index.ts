@@ -6,6 +6,10 @@ import { setupAI } from "./services/aiService";
 import { isTruthy } from "./util/isTruthy";
 import { logger, LogLevel } from "./util/logger";
 
+// For the full refactor, let's have an App.ts file which gets launched from here...
+// I'll need an IOC container which is also managed in the App.ts file.
+// Maybe name it Server.ts in stead? And that manages the IOC container with App being a component rather than the entry-point?
+
 const setupClients = async () => {
     console.log("--- Starting GPT-discord application ---");
 
