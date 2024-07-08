@@ -1,23 +1,30 @@
 {
-    "compilerOptions": {
-      "target": "ES6",
-      "module": "esnext",
-      "lib": ["es6"],
-      "allowJs": true,
-      "jsx": "react",
-      "outDir": "build",
-      "rootDir": "src",
-      "removeComments": true,
-      "strict": true,
-      "noImplicitAny": true,
-      "strictNullChecks": true,
-      "strictFunctionTypes": true,
-      "noImplicitReturns": true,
-      "moduleResolution": "node",
-      "allowSyntheticDefaultImports": true,
-      "esModuleInterop": true,
-      "resolveJsonModule": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/*.spec.ts", "build/**/*"]
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "esnext",
+    "lib": [
+      "es6"
+    ],
+    "allowJs": true,
+    "jsx": "react",
+    "outDir": "dist",
+    "rootDir": "src",
+    "removeComments": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build/**/*"
+  ]
 }
